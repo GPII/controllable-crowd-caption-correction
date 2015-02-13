@@ -1,4 +1,4 @@
-﻿var fdLocale = {
+var fdLocale = {
         months:[
                 "Січень",
                 "Лютий",
