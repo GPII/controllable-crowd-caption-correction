@@ -24,13 +24,13 @@ import CaptionCorrection.CaptionCorrection;
 public class CapReceiver extends HttpServlet {
 
 	//public static boolean debug = false;
-	public static CaptionCorrection cccHandler;
+	
   
     public void init() throws ServletException {
 		System.err.println("initializing CaptionCorrection Context");
 
-		this.getServletContext().setAttribute("captioncorrection",(Object) new CaptionCorrection());
-		cccHandler = (CaptionCorrection) this.getServletContext().getAttribute("captioncorrection");
+    	this.getServletContext().setAttribute("captioncorrection",(Object) new CaptionCorrection());
+
 		/*
 		CaptionCorrection ccc = (CaptionCorrection) this.getServletContext().getAttribute("captioncorrection");
 
@@ -57,8 +57,6 @@ public class CapReceiver extends HttpServlet {
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-		cccHandler.processRequest(request, response);
-		/*
 		CaptionCorrection ccc = (CaptionCorrection) request.getServletContext().getAttribute("captioncorrection");
 
 		if (ccc == null) {
@@ -67,7 +65,6 @@ public class CapReceiver extends HttpServlet {
 			//System.err.println("We got P from context.");
 			ccc.processRequest(request, response);
 		}
-		*/
     }
 
     /**
@@ -81,14 +78,8 @@ public class CapReceiver extends HttpServlet {
      */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		try {
-			String tmpStr = request.getQueryString();
-			processRequest(request, response);
-		} catch (IOException e) {
-			System.err.println("Exception in doGet: " + e.getMessage());
-		} catch (ServletException e) {
-			System.err.println("Exception in doGet: " + e.getMessage());
-		}
+		//System.err.println("Got doGet");
+        processRequest(request, response);
     }
 
 	/****************************************************************
@@ -102,14 +93,8 @@ public class CapReceiver extends HttpServlet {
      */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		try {
-			String tmpStr = request.getQueryString();
-			processRequest(request, response);
-		} catch (IOException e) {
-			System.err.println("Exception in doPost: " + e.getMessage());
-		} catch (ServletException e) {
-			System.err.println("Exception in doPost: " + e.getMessage());
-		}
+		//System.err.println("Got doPost");
+        processRequest(request, response);
     }
 
 	/****************************************************************

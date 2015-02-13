@@ -15,7 +15,6 @@ import javax.servlet.http.HttpServletRequest;
 public class TraceCaptionProcessor implements Handlers {
 	
 	HttpServletRequest request;
-	MeetingRoom roomHndl;
 
 	TraceCaptionProcessor() {
 		//throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
@@ -28,10 +27,6 @@ public class TraceCaptionProcessor implements Handlers {
 	public void init (HttpServletRequest request) {
 	}
 	
-	public void setMeetingRoom (MeetingRoom mr) {
-		roomHndl = mr;
-	}
-
 	public TraceCaptionProcessor(HttpServletRequest request) {
 			System.err.println("TraceCaptionProcessor" );
 	}

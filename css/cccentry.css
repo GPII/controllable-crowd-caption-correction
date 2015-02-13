@@ -1,5 +1,9 @@
 
 
+<style type="text/css">
+<!-- #id  .class -->
+
+
 #codes {
 	border: #c00 solid 1px;
 	margin-left: 1em;
@@ -16,6 +20,7 @@
 #captions {
 	margin: 5px;
 	padding: 5px;
+
 }
 
 .container {
@@ -60,4 +65,6 @@
 	border: #c00 solid 1px;
 	float: right;
 }
+
+</style>
 

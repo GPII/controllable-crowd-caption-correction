@@ -66,7 +66,6 @@ public class CaptionBuffer {
 			elem.id = buffer[current].id;
 			elem.token.setLength(0);
 			elem.token.append(buffer[current].token);
-			//update pointers
 			len--;
 			if (--current < 0) current = capacity-1;
 			returnVal = true;

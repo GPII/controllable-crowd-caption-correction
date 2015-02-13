@@ -1,66 +1,55 @@
 <!DOCTYPE html>
+<?php
+
+	$roomid = $_GET['roomid'];
+	$initials = $_GET['initials'];
+	$pwd = $_GET['pwd'];
+	
+	
+	$url = $_GET['url'];
+	$event = $_GET['event'];
+	$last = $_GET['last'];
+	
+	$debug = '0';
+	$debug = $_GET['debug'];
+	
+	
+?>
 
 <html>
 <head>
-<title>Read StreamText.Net Captions V3</title>
+<title>Read StreamText.Net Captions V2</title>
 
-<!--
-Joseph Schauer, 
-Trace R&D Center, 
-UW-Madison
 
--->
-
+	
 <script type="text/javascript" >
 
-	var ADMIN_RESPONSE_STATUS_PARAM = "adminrsp";
-	var ADMIN_RESPONSE_REASON_PARAM = "adminre";
-	var ADMIN_RESPONSE_STATUS_OK = "OK";
-	var ADMIN_RESPONSE_STATUS_NOK = "NOK";
-	
-	var ROOM_PARAM = "room";
-	var CORRECTOR_COMMAND_PARAM = "cmd";
-	var CORRECTOR_PWD_PARAM = "pwd";
-	var CORRECTOR_PARAM = "who";
-	var STARTRANGE_PARAM = "strt";
-	var ENDRANGE_PARAM = "end";
-	var DATA_PARAM = "data";
-	var DOCVERSION_PARAM = "ver";
-	var MEETINGDOCID_PARAM = "id";
-	var RESPONSE_STATUS_PARAM = "resp";
-	var RESPONSE_REASON_PARAM = "reas";
-	var ACCEPT_INDICATOR = "accept";
-	var DENY_INDICATOR = "deny";
-
-	var captionArray = [];
-	var ajaxResp = {
-	"resp" : "",
-	"ver" : 0,
-	"cmd" : "",
-	"strt" : 0,
-	"end" : 0,
-	"data" : ""
-	};
-
-	
 	var TIMEOUT = 300;
+
+	<?echo "//url=[$url]  event=[$event]  last=[$last]  debug=[$debug]";?>
+
 	var debugIt = false;
+	if ("<?php echo($debug); ?>" === "1") debugIt = true;
+	var myroomid = "<?php echo($roomid); ?>";
+	
 
 	var url = "http://www.streamtext.net/text-data.ashx";
-	var mtgEvent = "IHaveADream";
+	var event = "";
 	var last = "0";
 	
-	var meetingRoom = "";
-	var adminPass = "";
-	var cccURL = "http://ccc.raisingthefloor.org/ccc/capreceiver";
-	//var cccURL = "http://192.168.23.124:8080/ccc/capreceiver";
-	var cccCommand = "admincmd=caption&adminpwd="
+	<? if ($url != '') echo 'url = "' . $url . '";'?>
 	
+	<? if ($event != '') echo 'event = "' . $event . '";'?>
+	
+	<? if ($last != '') echo 'last = "' . $last . '";'?>
+
 	var pollingTimerEvent;
 	var stopStreamFlag = true;
 	var inPollRequest = false;
 	
 	
+	//for timing debugging
+	var lastTime = 0;
 /*******************************************************/
 /*******************************************************/
 function debug(text) {
@@ -76,16 +65,16 @@ function debug(text) {
 /*******************************************************/
 function xmlhttpGet(strURL,parameterStr) {
 
+	debug('xmlhttpGet:: Entered with strURL = :'+strURL+'   parameterStr=:' + parameterStr);
+
 	var MAXIMUM_WAITING_TIME = 15000; //milliseconds
 	var request = true;
 	var xmlHttpReq = null;
-	
 	var responseStr = "";
 	var response = "";
-	
-	var tstr;
 
 
+	// Mozilla/Safari
 	if (window.XMLHttpRequest) {
 		try {
 			xmlHttpReq = new window.XMLHttpRequest();
@@ -93,34 +82,54 @@ function xmlhttpGet(strURL,parameterStr) {
 			request = false;
 		}
 	}
+	// IE
+	else if (window.ActiveXObject) {
+		try {
+			xmlHttpReq = new ActiveXObject("MSXML2.XMLHTTP.3.0");
+		}
+		catch (e) {
+			try {
+				xmlHttpReq = new ActiveXObject("Msxml2.XMLHTTP");
+			}
+			catch (e) {
+				try {
+					xmlHttpReq = new ActiveXObject("Microsoft.XMLHTTP");
+				}
+				catch (e) {
+					request = false;
+				}
+			}
+		}
+	}
 	if (!xmlHttpReq) {
 		alert('Cannot create XLMHTTP instance');
-		debug('xmlhttpPoll:: Cannot create XLMHTTP instance');
+		debug('xmlhttpGet:: Cannot create XLMHTTP instance');
 		return request;
 	}
 
-	if (!xmlHttpReq.value)  {
-		xmlHttpReq.value = parameterStr;
-	} 
-
 	//xmlHttpReq.open('POST', strURL, true);	//don't wait
 	//xmlHttpReq.open('POST', strURL, false);  //wait
-	tstr =  strURL + parameterStr;
+	var tstr =  strURL + parameterStr;
 	xmlHttpReq.open("GET", tstr, true);	//don't wait
 	//xmlHttpReq.open("GET", "http://www.streamtext.net/text-data.ashx?event=IHaveADream&last=-1", true);	//don't wait
-	//xmlHttpReq.open('GET', strURL, false);  //wait
+	//xmlHttpReq.open('POST', strURL, false);  //wait
 
 	/*var requestTimer = setTimeout(function() {
 		debug('xmlhttpGet:: aborting request; timeout reached');
 		debug('xmlhttpGet:: aborting for value='+xmlHttpReq.value);
+		lockRequestPending = false;
 		xmlHttpReq.abort();
 		//tell it was aborted
 		}, MAXIMUM_WAITING_TIME);
 */
-
-
 	xmlHttpReq.onreadystatechange = function ()
 		{
+		//////////////
+			//var returnStr = "";
+			//debug("sssssssssssssssssssssssssssssssssssssssssssss<br /> <br />");
+			debug('xmlhttpGet: onreadystatechange Function START');
+			//debug('xmlhttpGet::xmlHttpReq callback function running');
+			//debug('xmlhttpGet:: xmlHttpReq.value='+this.value);
 			try {
 				if (this.readyState === 1) {
 					debug('xmlhttpGet::xmlHttpReq.readyState=:1');
@@ -130,6 +139,7 @@ function xmlhttpGet(strURL,parameterStr) {
 				}
 				else if (this.readyState === 3) {
 					debug('xmlhttpGet::xmlHttpReq.readyState=:3');
+					//debug('xmlhttpGet::xmlHttpReq.responseText3=:'+this.responseText);
 				}
 				else if (this.readyState === 4) {
 					debug('xmlhttpGet::xmlHttpReq.readyState=:4');
@@ -137,16 +147,18 @@ function xmlhttpGet(strURL,parameterStr) {
 
 					if (this.status == 200) {
 						
+						//debug('xmlhttpGet::xmlHttpReq.status=:'+this.status);
 						debug('xmlhttpGet::xmlHttpReq.responseText=:'+this.responseText);
 						responseStr = this.responseText;
-						response = JSON.parse( responseStr);
+						response = eval('(' + responseStr + ')');
 						
 						var next;
 						if ((next = response.lastPosition) != null) {
-							last = next;
 							pushNow(response);
 							inPollRequest = false;
+							last = next;
 						}
+						
 					} else {
 						debug('Error of some type - NOT status=200:  xmlhttpGet::xmlHttpReq.status=:'+this.status);
 						debug('xmlhttpGet::xmlHttpReq.statusText=:'+this.statusText);
@@ -159,29 +171,39 @@ function xmlhttpGet(strURL,parameterStr) {
 					debug('not sure what up - ready not 1,2,3 or 4: xmlhttpGet::xmlHttpReq.readyState=:'+this.readyState);
 					inPollRequest = false;
 				}
-			} 
+				
+			} //try
 			catch (e) {
 				debug('Caught Exception on readyState in xmlhttpGet');
 				inPollRequest = false;
 			}
+			debug('onreadystatechange Function END');
+			//debug("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee<br /> <br />");
 		}
+		/////////////
+		
+
+	//debug('xmlhttpGet::xmlHttpReq.send=:'+ 'paramenters=' + xmlHttpReq.value);
 	inPollRequest = true;
 	xmlHttpReq.send();
-
+	// self.xmlHttpReq.send('id=' + parameterStr);
+	debug ('xmlhttpGet:: END');
 }
+
 
 /*******************************************************/
 /*******************************************************/
 function xmlhttpPost(strURL,parameterStr) {
 
+	debug('xmlhttpPost:: Entered with strURL = :'+strURL+'   parameterStr=:' + parameterStr);
+	//debug('xmlhttpPost:: Entered');
+
 	var MAXIMUM_WAITING_TIME = 15000; //milliseconds
 	var request = true;
 	var xmlHttpReq = null;
 
-	var responseStr = "";
-	var response = "";
-	
 
+	// Mozilla/Safari
 	if (window.XMLHttpRequest) {
 		try {
 			xmlHttpReq = new window.XMLHttpRequest();
@@ -189,21 +211,36 @@ function xmlhttpPost(strURL,parameterStr) {
 			request = false;
 		}
 	}
+	// IE
+	else if (window.ActiveXObject) {
+		try {
+			xmlHttpReq = new ActiveXObject("MSXML2.XMLHTTP.3.0");
+		}
+		catch (e) {
+			try {
+				xmlHttpReq = new ActiveXObject("Msxml2.XMLHTTP");
+			}
+			catch (e) {
+				try {
+					xmlHttpReq = new ActiveXObject("Microsoft.XMLHTTP");
+				}
+				catch (e) {
+					request = false;
+				}
+			}
+		}
+	}
 	if (!xmlHttpReq) {
 		alert('Cannot create XLMHTTP instance');
-		debug('xmlhttpPoll:: Cannot create XLMHTTP instance');
+		debug('xmlhttpPost:: Cannot create XLMHTTP instance');
 		return request;
 	}
 
-	if (!xmlHttpReq.value)  {
-		xmlHttpReq.value = parameterStr;
-	} 
-
 	try {
-		//xmlHttpReq.open('POST', strURL, true);	//don't wait
-		xmlHttpReq.open('POST', strURL, false);  //wait
-		//xmlHttpReq.open("GET", strURL, true);	//don't wait
-		//xmlHttpReq.open('POST', strURL, false);  //wait
+	//xmlHttpReq.open('POST', strURL, true);	//don't wait
+	xmlHttpReq.open('POST', strURL, false);  //wait
+	//xmlHttpReq.open("GET", strURL, true);	//don't wait
+	//xmlHttpReq.open('POST', strURL, false);  //wait
 	} catch (e)  {
 		debug("error: " + e);
 		return;
@@ -224,215 +261,208 @@ function xmlhttpPost(strURL,parameterStr) {
 	//xmlHttpReq.setRequestHeader('Cache-Control', 'no-cache');
 	xmlHttpReq.onreadystatechange = function ()
 		{
+		//////////////
+			//var returnStr = "";
+			//debug("sssssssssssssssssssssssssssssssssssssssssssss<br /> <br />");
+			debug('xmlhttpPost: onreadystatechange Function START');
+			debug('xmlhttpPost::xmlHttpReq callback function running');
+			debug('xmlhttpPost:: xmlHttpReq.value='+this.value);
 			try {
 				if (this.readyState === 1) {
-					//debug('xmlhttpPost::xmlHttpReq.readyState=:1');
+					debug('xmlhttpPost::xmlHttpReq.readyState=:1');
 				} 
 				else if (this.readyState === 2) {
-					//debug('xmlhttpPost::xmlHttpReq.readyState=:2');
+					debug('xmlhttpPost::xmlHttpReq.readyState=:2');
 				}
 				else if (this.readyState === 3) {
-					//debug('xmlhttpPost::xmlHttpReq.readyState=:3');
-					//debug('xmlhttpPost::xmlHttpReq.responseText3=:'+this.responseText);
+					debug('xmlhttpPost::xmlHttpReq.readyState=:3');
+					debug('xmlhttpPost::xmlHttpReq.responseText3=:'+this.responseText);
 				}
 				else if (this.readyState === 4) {
-					//debug('xmlhttpPost::xmlHttpReq.readyState=:4');
+					debug('xmlhttpPost::xmlHttpReq.readyState=:4');
 					///clearTimeout(requestTimer); //do not abort
 
-					if (this.status != 200) {
+					if (this.status == 200) {
+						
 						debug('xmlhttpPost::xmlHttpReq.status=:'+this.status);
 						debug('xmlhttpPost::xmlHttpReq.responseText=:'+this.responseText);
-						responseStr = this.responseText;
-						if (responseStr.charAt(0) == "{") {
-							ajaxResp = JSON.parse(responseStr);
-						} else {
-							var len = parseInt(responseStr,10);
-							var len2 = responseStr.indexOf("{");
-							len = len2 + len;
-							var tmp = responseStr.slice(len2,len);
-							ajaxResp = JSON.parse(tmp);
-							var data = responseStr.slice(len);
-						}
-						if ((typeof ajaxResp[ADMIN_RESPONSE_STATUS_PARAM]) != "undefined") {
-							tmp = ajaxResp[ADMIN_RESPONSE_STATUS_PARAM];
-							//got some administrative response.  
-							if (tmp != "") {
-								document.getElementById('message').innerHTML = "Status: " + tmp;
-							}
-						}
+						
+						
 					} else {
 						debug('Error of some type - NOT status=200:  xmlhttpPost::xmlHttpReq.status=:'+this.status);
 						debug('xmlhttpPost::xmlHttpReq.statusText=:'+this.statusText);
 						debug('xmlhttpPost::xmlHttpReq.responseText=:'+this.responseText);
 					}
-					inPostRequest = false;
+					document.getElementById('message').innerHTML = this.responseText;
 				} else {
 					debug('not sure what up - ready not 1,2,3 or 4: xmlhttpPost::xmlHttpReq.readyState=:'+this.readyState);
-					inPostRequest = false;
 				}
 			} //try
 			catch (e) {
 				debug('Caught Exception on readyState in xmlhttpPost');
-				inPostRequest = false;
 			}
+			debug('onreadystatechange Function END');
+			//debug("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee<br /> <br />");
 		}
-	inPostRequest = true;
+		/////////////
+		
+
+	//debug('xmlhttpPost::xmlHttpReq.send=:'+ 'paramenters=' + xmlHttpReq.value);
+	//var str1 = 'admincmd=caption&adminpwd=password123456&caption=' + parameterStr + '&roomid=' + myroomid;
+	//xmlHttpReq.send('frase=' + parameterStr + '&roomid=' + myroomid );
 	xmlHttpReq.send(parameterStr );
+	//xmlHttpReq.send();
+	// self.xmlHttpReq.send('id=' + parameterStr);
+	debug ('xmlhttpPost:: END');
 }
 
+//////////////////////////////////////////
+//////////////////////////////////////////
+
+/*****************************************************/
+/*****************************************************/
+function replacer(match, p1, p2, offset, theStr) {
+	if ((p2 == null) || (p2 == "")) {
+		//not a "non-word" so must be a word
+		return match;
+	} else {
+		var tmp = p2.charCodeAt(0);
+		if (tmp <= 15) {
+			return ("%0" + tmp.toString(16));
+		} else {
+			return ("%" + tmp.toString(16));
+		}
+	}
+}
+
+/*****************************************************/
+function hexEncoder(str) {
+	var tmpStr = "";
+	if (str != "") {
+		var re = /(\w)+|([\W])/g;
+		tmpStr +=  str.replace( re, replacer);
+	}
+	return tmpStr;
+}
+
+
+
+
+
+
+//http://www.streamtext.net/player?event=IHaveADream
 
 //////////////////////////////////////////
 //////////////////////////////////////////
 function getStream(n) {
-	//var thisTime = new Date().getTime();
+	if (debugIt) {
+		var thisTime = new Date().getTime();
+		var diff = thisTime - lastTime;
+		lastTime = thisTime;
+		debug("In getStream() via " + n + "[" + diff + "]");
+	}
 	if (stopStreamFlag == false) {
-		//pushNow(JSON.parse(testdata));
-	
 		if (!inPollRequest) {
-			xmlhttpGet(url, "?event=" + mtgEvent + "&last=" + last);
+			xmlhttpGet(url, "?event=" + event + "&last=" + last);
 		}
 		pollingTimerEvent = setTimeout('getStream(2)',TIMEOUT);
-	
-	} else {
-		document.getElementById('stlast').value = last;
 	}
+	debug("Out getStream()");
 }
-
+	
 //////////////////////////////////////////
 //////////////////////////////////////////
 function pushNow(response) {
+	debug("In pushNow()");
 	var len;
-	var cnt;
-	var i, j;
+	var text = "";
 	var tmpTxt = "";
-	var cccParam = "";
-	var items;
-	var item;
-	var earliestChange;
-	var previousLength;
 
-
+	//clearTimeout(pollingTimerEvent);
 	if ((response != null) && (response.i != null) && ((len = response.i.length) != null)) {
 		if (len != 0) {
-			items = response.i;
-			if ((typeof items[0].i != 'undefined') && (typeof items[0].l != 'undefined')) {
-				//have the more advanced form
-				previousLength = captionArray.length;
-				earliestChange = previousLength;
-				for (cnt = 0; cnt < len; cnt++) {
-					item = items[cnt];
-					item.i = parseInt(item.i);
-					item.l = parseInt(item.l);
-					item.d = decodeURIComponent(item.d);
-					if (item.i < earliestChange) {
-						earliestChange = item.i;
-					}
-					if (item.n == "insert") {
-						for (j = 0; j < item.l; j++) {
-							//insert char item.d[j] into captionArray[item.i + j]
-							captionArray.splice(item.i+j,0,item.d.charAt(j));
-						}
-					} else if (item.n == "remove") {
-						captionArray.splice(item.i,item.l);
-					}
-				}
-				//get number of backspaces, if any
-				len = previousLength - earliestChange;
-				for (j = 0; j < len; j++) {
-					tmpTxt += '\b';
-				}
-				//get text
-				len = captionArray.length;
-				for (j = earliestChange; j < len; j++) {
-					tmpTxt += captionArray[j];
-				}
-				tmpTxt = encodeURIComponent(tmpTxt);
-
-			} else if ((typeof items[0].p != 'undefined') && (typeof items[0].m !== 'undefined')) {
-				for (cnt = 0; cnt < len; cnt++) {
-					tmpTxt += response.i[cnt].d;
-				}
-			} 
-			//do something with text
+			for (var cnt = 0; cnt < len; cnt++) {
+				tmpTxt += response.i[cnt].d;
+			}
+			
+			debug("d =: " + tmpTxt);
 			document.getElementById('captions').value += decodeURIComponent(tmpTxt);
 			
-			cccParam = cccCommand + adminPass + "&" + ROOM_PARAM + "=" + meetingRoom + "&caption=" + tmpTxt;
-			xmlhttpPost(cccURL,cccParam);
+			//tmpTxt = decodeURIComponent(tmpTxt);
+			//tmpTxt = hexEncoder(tmpTxt);
+
+			text = 'admincmd=caption&adminpwd=password123456&caption=' + tmpTxt + '&roomid=' + myroomid;
+
+			xmlhttpPost("capreceiver",text);
+
+			document.getElementById('p1').innerHTML = "Last sent to server =[" + last + "]";
 			
-			//show status
-			document.getElementById('p1').innerHTML = "Packet number =[" + last + "]";
-		}
+		} 
 	}
+	debug("Out pushNow()");
+	
 }
 
 //////////////////////////////////////////
 //////////////////////////////////////////
 function stopStream() {
-	stopStreamFlag = true;
+	//clearTimeout(t);
+	stopStreamFlag = 1;
+	debug("should be stopped");
 }
 
 //////////////////////////////////////////
 //////////////////////////////////////////
 function startStream() {
-
-	url = document.getElementById('sturl').value;
-	mtgEvent = document.getElementById('stevent').value;
-	last = document.getElementById('stlast').value;
-	document.getElementById('p0').innerHTML = "Start Url: " + url + "?event=" + mtgEvent + "&last=" + last;
-	
-	meetingRoom = document.getElementById('cccroom').value;
-	adminPass = document.getElementById('cccpwd').value;
-	cccURL = document.getElementById('cccurl').value;
-
-	stopStreamFlag = false;
-	getStream(1);
+	stopStreamFlag = 0;
+	debug("Started");
+	getStream();
 }
 
+//////////////////////////////////////////
+//////////////////////////////////////////
+function createRoom() {
 
+	var text = 'admincmd=create&adminpwd=password123456&roomid=' + myroomid;
+
+	xmlhttpPost("capreceiver",text);
+
+}
+
+//////////////////////////////////////////
+//////////////////////////////////////////
+function openRoom() {
+	var text = 'admincmd=open&adminpwd=password123456&roomid=' + myroomid;
+	xmlhttpPost("capreceiver",text);
+
+}
 //////////////////////////////////////////
 //////////////////////////////////////////
 function clearCaptions() {
 	document.getElementById('captions').innerHTML = "";
 	document.getElementById('captions').value = '';
 }
-
 //////////////////////////////////////////
 //////////////////////////////////////////
 function init() {
-
-	document.getElementById('sturl').value = url;
-	document.getElementById('stevent').value = mtgEvent;
-	document.getElementById('stlast').value = last;
-	
-	document.getElementById('cccroom').value = meetingRoom;
-	document.getElementById('cccpwd').value = adminPass;
-	document.getElementById('cccurl').value = cccURL;
-
-
+	document.getElementById('p0').innerHTML = "StreamText URL =[" + url + "] event=[" + event + "]  RoomID=[" + myroomid + "]";
+	document.getElementById('p1').innerHTML = "Last=[" + last + "]";
 }
-
 
 </script>
 
 </head>
 
 <body>
-StreamText URL: <INPUT TYPE="text" id="sturl" VALUE="" SIZE="60"><br/>
-Event: <INPUT TYPE="text" id="stevent" VALUE="" SIZE="60"><br/>
-Start number: <INPUT TYPE="text" id="stlast" VALUE="" SIZE="15"><br/>
-<br/>
-CCC meeting room: <INPUT TYPE="text" id="cccroom" VALUE="" SIZE="10"><br/>
-CCC Admin Password: <INPUT TYPE="password" id="cccpwd" VALUE="" SIZE="5"><br/>
-CCC URL: <INPUT TYPE="text" id="cccurl" VALUE="" SIZE="60"><br/>
 
-CCC
+<p><button  onclick="createRoom()">Create Room</button>&nbsp;&nbsp;<button  onclick="openRoom()">Open Room</button></p>
 <p><button  onclick="startStream()">Start StreamText</button>&nbsp;&nbsp;<button  onclick="stopStream()">Stop StreamText</button></p>
 
-<div class="notification"><p id="message">msg</p></div>
+<div class="notification"><p id="message"></p></div>
 
 <div id='d1'>
-	<p id='p0'>Start Url: </p>
-	<p id='p1'>Packet number =[]</p>
+	<p id='p0'>StreamText </p>
+	<p id='p1'>Last = </p>
 	
 	&nbsp;<button  onclick="clearCaptions()">Clear</button>
 	<p>Captions</p>

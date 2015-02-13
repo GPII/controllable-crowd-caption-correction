@@ -22,13 +22,11 @@
 	var debugIt = false;
 	if ("<?php echo($debug); ?>" === "1") debugIt = true;
 	
-	var myroomid = "test2";
-	var mypassword = "password1234567890";
+	var myroomid = "gv1";
+	var mypassword = "";
 
 //////////////////////////////////////////
 	var stopSendingFlag = false;
-	var STUCKTIMERCHECKDEFAULT = 10;
-	var checkStuckCaption = STUCKTIMERCHECKDEFAULT;
 	var SENDTIMEOUT = 200;
 	var sendTimerEventVar;
 	var inPostRequest = false;
@@ -172,9 +170,7 @@ function xmlhttpPost(strURL,parameterStr) {
 					debug('xmlhttpPost::xmlHttpReq.responseText=:'+this.responseText);
 
 				}
-				if (this.responseText != "") {
-					document.getElementById('message').innerHTML = "Status: " + this.responseText;
-				}
+				document.getElementById('message').innerHTML = "Status: " + this.responseText;
 				inPostRequest = false;
 			} else {
 				debug('not sure what up - ready not 1,2,3 or 4: xmlhttpPost::xmlHttpReq.readyState=:'+this.readyState);
@@ -335,7 +331,7 @@ function xmlhttpPoll(strURL,parameterStr) {
 
 	inPollRequest = true;
 	immediatePollRequested = false;
-	var tmpStr = parameterStr + '&room=' + myroomid;
+	var tmpStr = parameterStr + '&roomid=' + myroomid;
 	xmlHttpReq.send(tmpStr );
 	// self.xmlHttpReq.send('id=' + parameterStr);
 	debug1 ('xmlhttpPoll:: END');
@@ -400,7 +396,7 @@ function dumpBuffer() {
 	var diffIndex = 0;
 	var newText = "";
 	var str = "";
-	var captionStr = "admincmd=caption&adminpwd=" + mypassword + "&room=" + myroomid ;
+	var captionStr = "";
 
 	if (stopSendingFlag == false) {
 		
@@ -437,9 +433,8 @@ function dumpBuffer() {
 				//display codes
 				displayCodes(str);
 			
-				//captionStr = "admincmd=caption&adminpwd=" + mypassword + "&room=" + myroomid ;
+				captionStr = "admincmd=caption&adminpwd=" + mypassword + "&roomid=" + myroomid ;
 				xmlhttpPost("capreceiver",captionStr + "&caption=" + str);
-				checkStuckCaption = STUCKTIMERCHECKDEFAULT;
 			} else {
 				//no difference...see if we reached timeout for putting in an artificial space
 				//if (putArtificialDelimFlag == false) {
@@ -449,14 +444,9 @@ function dumpBuffer() {
 				//		add to buffer
 				//	}
 				//}
-				if (--checkStuckCaption <= 0) {
-					//send whether we have anything or not to prod stuck caption
-					xmlhttpPost("capreceiver",captionStr + "&caption=" + str);
-					checkStuckCaption = STUCKTIMERCHECKDEFAULT;
-				}
+
 			
 			}
-
 		} //else wait another timeout cycle to try to send
 		
 		sendTimerEventVar = setTimeout("dumpBuffer()",SENDTIMEOUT);
@@ -529,7 +519,7 @@ function adminCommand(cmd) {
 	stopClear();
 	myroomid = document.getElementById('room').value; 
 	mypassword = document.getElementById('password').value;
-	var str = "admincmd=" + cmd + "&adminpwd=" + mypassword + "&room=" + myroomid;
+	var str = "admincmd=" + cmd + "&adminpwd=" + mypassword + "&roomid=" + myroomid;
 	if (!inPostRequest) {
 		xmlhttpPost("capreceiver",str);
 	}

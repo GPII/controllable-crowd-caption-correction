@@ -1,0 +1,77 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+    <style type="text/css">
+        .style1
+        {
+            width: 800px;
+        }
+        .style2
+        {
+            width: 147px;
+        }
+        #Text1
+        {
+            width: 161px;
+        }
+    </style>
+<script language="javascript">
+function Checkpwds(){
+	if (document.f1.senha.value==document.f1.senha2.value)
+	{
+		alert('Corrector and Admin password cannot be the same');
+		document.f1.senha.value='';
+		document.f1.senha2.value='';
+		document.f1.senha.focus();
+		return false;
+	}
+
+}
+</script>
+</head>
+<body>
+ <form name="f1" action="createroom.php" method="post" onsubmit="return Checkpwds()">
+    <table class="style1">
+        <tr>
+            <td class="style2">
+                Room ID:</td>
+            <td>
+                <input id="Text1" type="text" name="roomid" /></td>
+        </tr>
+        <tr>
+            <td class="style2">
+                Corrector Password:</td>
+            <td>
+                <input id="Password1" type="password" name="senha" /></td>
+        </tr>
+         <tr>
+            <td class="style2">
+                Admin Password:</td>
+            <td>
+                <input id="Password2" type="password" name="senha2" /></td>
+        </tr>
+         <tr>
+            <td class="style2">
+                &nbsp;</td>
+            <td>
+                <input id="Checkbox1" type="checkbox" name="teste" value="1" />Do not display previous captions to participants</td>
+        </tr>
+        <tr>
+            <td class="style2">
+                &nbsp;</td>
+            <td>
+                <input id="Submit1" type="submit" value="submit" /><input id="Reset1" 
+                    type="reset" value="reset" /></td>
+        </tr>
+        <tr>
+            <td class="style2">
+                &nbsp;</td>
+            <td>
+                &nbsp;</td>
+        </tr>
+    </table>
+    </form>
+</body>
+</html>

@@ -1,0 +1,792 @@
+
+<html>
+<head>
+<title>Caption Sender</title>
+<link rel="stylesheet" type="text/css" href="css/cccentry.css" />
+<link rel="stylesheet" type="text/css" href="css/cccmobile.css" />
+
+
+
+
+<script type="text/javascript" >
+
+
+	var myroomid = "gv1";
+	var mypassword = "";
+	var debugIt = true;
+	var CurrentPosition = 0;
+
+	var oldText ="";
+	var oldTextLen = 0;
+	var curText = "";
+	var curTextLen = 0;
+
+	
+/*******************************************************/
+/*******************************************************/
+function debug(text) {
+	if (debugIt) {
+		if (window.console) {
+			window.console.log(text);
+		}
+	}
+}
+
+/*******************************************************/
+/*******************************************************/
+function debug1(text) {
+
+}
+
+
+
+/*******************************************************/
+/*******************************************************/
+function xmlhttpPost(strURL,parameterStr) {
+
+	debug('xmlhttpPost:: Entered with strURL = :'+strURL+'   parameterStr=:' + parameterStr);
+	//debug('xmlhttpPost:: Entered');
+
+	var MAXIMUM_WAITING_TIME = 15000; //milliseconds
+	var request = true;
+	var xmlHttpReq = null;
+
+
+	// Mozilla/Safari
+	if (window.XMLHttpRequest) {
+		try {
+			xmlHttpReq = new window.XMLHttpRequest();
+		} catch (e) {
+			request = false;
+		}
+	}
+	// IE
+	else if (window.ActiveXObject) {
+		try {
+			xmlHttpReq = new ActiveXObject("MSXML2.XMLHTTP.3.0");
+		}
+		catch (e) {
+			try {
+				xmlHttpReq = new ActiveXObject("Msxml2.XMLHTTP");
+			}
+			catch (e) {
+				try {
+					xmlHttpReq = new ActiveXObject("Microsoft.XMLHTTP");
+				}
+				catch (e) {
+					request = false;
+				}
+			}
+		}
+	}
+	if (!xmlHttpReq) {
+		alert('Cannot create XLMHTTP instance');
+		debug('xmlhttpPost:: Cannot create XLMHTTP instance');
+		return request;
+	}
+
+
+/*	if (!xmlHttpReq.value)  {
+		xmlHttpReq.value = parameterStr;
+		debug('xmlhttpPost:: xmlHttpReq assigned value='+xmlHttpReq.value);
+	} else {
+		debug('xmlhttpPost:: xmlHttpReq already have value='+xmlHttpReq.value);
+	}
+*/
+	try {
+	//xmlHttpReq.open('POST', strURL, true);	//don't wait
+	xmlHttpReq.open('POST', strURL, false);  //wait
+	//xmlHttpReq.open("GET", strURL, true);	//don't wait
+	//xmlHttpReq.open('POST', strURL, false);  //wait
+	} catch (e)  {
+		debug("error: " + e);
+		return;
+	}
+	/*var requestTimer = setTimeout(function() {
+		debug('xmlhttpPost:: aborting request; timeout reached');
+		debug('xmlhttpPost:: aborting for value='+xmlHttpReq.value);
+		lockRequestPending = false;
+		xmlHttpReq.abort();
+		//tell it was aborted
+		}, MAXIMUM_WAITING_TIME);
+*/
+	xmlHttpReq.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+	xmlHttpReq.setRequestHeader('Cache-Control', 'no-cache');
+	//xmlHttpReq.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+	//xmlHttpReq.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
+	//xmlHttpReq.setRequestHeader('Accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8');
+	//xmlHttpReq.setRequestHeader('Cache-Control', 'no-cache');
+	xmlHttpReq.onreadystatechange = function ()
+		{
+		//////////////
+			//var returnStr = "";
+			//debug("sssssssssssssssssssssssssssssssssssssssssssss<br /> <br />");
+			debug('onreadystatechange Function START');
+			debug('xmlhttpPost::xmlHttpReq callback function running');
+			debug('xmlhttpPost:: xmlHttpReq.value='+this.value);
+			try {
+				if (this.readyState === 1) {
+					debug('xmlhttpPost::xmlHttpReq.readyState=:1');
+				} 
+				else if (this.readyState === 2) {
+					debug('xmlhttpPost::xmlHttpReq.readyState=:2');
+				}
+				else if (this.readyState === 3) {
+					debug('xmlhttpPost::xmlHttpReq.readyState=:3');
+					debug('xmlhttpPost::xmlHttpReq.responseText3=:'+this.responseText);
+				}
+				else if (this.readyState === 4) {
+					debug('xmlhttpPost::xmlHttpReq.readyState=:4');
+					///clearTimeout(requestTimer); //do not abort
+
+					if (this.status == 200) {
+						
+						debug('xmlhttpPost::xmlHttpReq.status=:'+this.status);
+						debug('xmlhttpPost::xmlHttpReq.responseText=:'+this.responseText);
+						
+						
+					} else {
+						debug('Error of some type - NOT status=200:  xmlhttpPost::xmlHttpReq.status=:'+this.status);
+						debug('xmlhttpPost::xmlHttpReq.statusText=:'+this.statusText);
+						debug('xmlhttpPost::xmlHttpReq.responseText=:'+this.responseText);
+					}
+					document.getElementById('message').innerHTML = this.responseText;
+					pollNow();
+				} else {
+					debug('not sure what up - ready not 1,2,3 or 4: xmlhttpPost::xmlHttpReq.readyState=:'+this.readyState);
+				}
+			} //try
+			catch (e) {
+				debug('Caught Exception on readyState in xmlhttpPost');
+			}
+			debug('onreadystatechange Function END');
+			//debug("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee<br /> <br />");
+		}
+		/////////////
+		
+
+	//debug('xmlhttpPost::xmlHttpReq.send=:'+ 'paramenters=' + xmlHttpReq.value);
+	
+	//xmlHttpReq.send('frase=' + parameterStr + '&roomid=' + myroomid );
+	//xmlHttpReq.send('admincmd=caption&adminpwd=password123456&caption=' + parameterStr + '&roomid=' + myroomid );
+	//var tmpStr = 'admincmd=caption&adminpwd=password123456&caption=' + parameterStr + '&roomid=' + myroomid ;
+	xmlHttpReq.send(parameterStr );
+
+	//xmlHttpReq.send();
+	// self.xmlHttpReq.send('id=' + parameterStr);
+	debug ('xmlhttpPost:: END');
+}
+
+/*******************************************************/
+/*******************************************************/
+function xmlhttpPoll(strURL,parameterStr) {
+	//alert('ajax:' + parameterStr);
+	debug1('xmlhttpPoll:: Entered with strURL = :'+strURL+'   parameterStr=:' + parameterStr);
+	debug1('xmlhttpPoll:: Entered');
+
+	var MAXIMUM_WAITING_TIME = 15000; //milliseconds
+	var request = false;
+	var xmlHttpReq = null;
+	//var self = this;
+
+	// Mozilla/Safari
+	if (window.XMLHttpRequest) {
+		try {
+			xmlHttpReq = new window.XMLHttpRequest();
+		} catch (e) {
+			request = false;
+		}
+	}
+	// IE
+	else if (window.ActiveXObject) {
+		try {
+			xmlHttpReq = new ActiveXObject("MSXML2.XMLHTTP.3.0");
+		}
+		catch (e) {
+			try {
+				xmlHttpReq = new ActiveXObject("Msxml2.XMLHTTP");
+			}
+			catch (e) {
+				try {
+					xmlHttpReq = new ActiveXObject("Microsoft.XMLHTTP");
+				}
+				catch (e) {
+					request = false;
+				}
+			}
+		}
+	}
+	if (!xmlHttpReq) {
+		alert('Cannot create XLMHTTP instance');
+		debug1('xmlhttpPoll:: Cannot create XLMHTTP instance');
+		return request;
+	}
+
+	if (!xmlHttpReq.value)  {
+		xmlHttpReq.value = parameterStr;
+		debug1('xmlhttpPoll:: xmlHttpReq assigned value='+xmlHttpReq.value);
+	} else {
+		debug1('xmlhttpPoll:: xmlHttpReq already have value='+xmlHttpReq.value);
+	}
+
+	xmlHttpReq.open('POST', strURL, true);	//don't wait
+	//xmlHttpReq.open('POST', strURL, false);  //wait
+
+	/*var requestTimer = setTimeout(function() {
+		debug('xmlhttpPoll:: aborting request; timeout reached');
+		debug('xmlhttpPoll:: aborting for value='+xmlHttpReq.value);
+		lockRequestPending = false;
+		xmlHttpReq.abort();
+		//tell it was aborted
+		}, MAXIMUM_WAITING_TIME);
+*/
+	xmlHttpReq.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+	xmlHttpReq.setRequestHeader('Cache-Control', 'no-cache');
+	xmlHttpReq.onreadystatechange = function () {
+		//////////////
+		var pollResponseStr;
+		var pollResponse = "";
+		//var returnStr = "";
+		debug1("sssssssssssssssssssssssssssssssssssssssssssss<br /> <br />");
+		debug1('onreadystatechange Function START');
+		debug1('xmlhttpPoll::xmlHttpReq callback function running');
+		debug1('xmlhttpPoll:: xmlHttpReq.value='+this.value);
+		try {
+			if (this.readyState === 1) {
+				debug1('xmlhttpPoll::xmlHttpReq.readyState=:1');
+			} 
+			else if (this.readyState === 2) {
+				debug1('xmlhttpPoll::xmlHttpReq.readyState=:2');
+			}
+			else if (this.readyState === 3) {
+				debug1('xmlhttpPoll::xmlHttpReq.readyState=:3');
+				debug1('xmlhttpPoll::xmlHttpReq.responseText3=:'+this.responseText);
+			}
+			else if (this.readyState === 4) {
+				debug1('xmlhttpPoll::xmlHttpReq.readyState=:4');
+				//clearTimeout(requestTimer); //do not abort
+
+				if (this.status == 200) {
+					
+					debug1('xmlhttpPoll::xmlHttpReq.status=:'+this.status);
+					debug1('xmlhttpPoll::xmlHttpReq.responseText=:'+this.responseText);
+					pollResponseStr = this.responseText;
+					
+					var tmpIndex;
+					if ((tmpIndex = pollResponseStr.indexOf("~OK;last=")) != -1) {
+						//command accepted.
+						//~OK;last=  9
+						var tmpIndex2 = pollResponseStr.indexOf('~',tmpIndex+9)
+						CurrentPosition = pollResponseStr.substring(tmpIndex+9,tmpIndex2);
+						pollResponse = pollResponseStr.substring(tmpIndex2+1);
+						debug1("pollResponseStr: " + pollResponseStr);
+						debug1("pollResponse: " + pollResponse);
+
+						if (pollResponse != "") {
+							var el = document.getElementById('comet');
+							el.innerHTML += pollResponse + "<br />";
+							el.scrollTop = el.scrollHeight;
+
+							pollResponse = "";
+						}
+					} else {
+						//error of some type???
+						debug1('Error of some type:  xmlhttpPoll::xmlHttpReq.status=:200, pollResponseStr =:'+pollResponseStr);
+					}
+				} else {
+					debug1('Error of some type - NOT status=200:  xmlhttpPoll::xmlHttpReq.status=:'+this.status);
+					debug1('xmlhttpPoll::xmlHttpReq.statusText=:'+this.statusText);
+				}
+				inPollRequest = false;
+				if (immediatePollRequested == true) {
+					pollNow();
+				}
+			} else {
+				debug1('not sure what up - ready not 1,2,3 or 4: xmlhttpPoll::xmlHttpReq.readyState=:'+this.readyState);
+				inPollRequest = false;
+			}
+		} //try
+		catch (e) {
+			debug1('Caught Exception on readyState in xmlhttpPoll');
+		}
+		debug1('onreadystatechange Function END');
+		debug1("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee<br /> <br />");
+	}
+		/////////////
+		
+
+	inPollRequest = true;
+	immediatePollRequested = false;
+	var tmpStr = parameterStr + '&roomid=' + myroomid;
+	xmlHttpReq.send(tmpStr );
+	// self.xmlHttpReq.send('id=' + parameterStr);
+	debug1 ('xmlhttpPoll:: END');
+}
+
+var lastText = "";
+//
+// CONSTANTS and globals
+var TIMEOUT = 300;
+var timerEventVar;
+var BUFFER = [];
+var replaying = false;
+var bp = 0;
+var origText = '';
+
+/*****************************************************/
+/*****************************************************/
+function replacer(match, p1, p2, offset, theStr) {
+	if ((p2 == null) || (p2 == "")) {
+		//not a "non-word" so must be a word
+		return match;
+	} else {
+		var tmp = p2.charCodeAt(0);
+		if (tmp <= 15) {
+			return ("%0" + tmp.toString(16));
+		} else {
+			return ("%" + tmp.toString(16));
+		}
+	}
+}
+
+/*
+function replacer(match, p1, p2, offset, theStr) {
+	if (p1 != null) return match;
+	else {
+		var tmp = p2.charCodeAt(0);
+		if (tmp <= 15) {
+			return ("%0" + tmp.toString(16));
+		} else {
+			return ("%" + tmp.toString(16));
+		}
+	}
+}
+*/
+/*****************************************************/
+function hexEncoder(str) {
+	var tmpStr = "";
+	if (str != "") {
+		var re = /(\w)+|([\W])/g;
+		tmpStr +=  str.replace( re, replacer);
+	}
+	return tmpStr;
+}
+
+/*****************************************************/
+/*****************************************************/
+function moveCursor(element) {
+	element.selectionStart = element.selectionEnd = element.value.length;
+}
+
+//
+// extend Array objects, test if value is in array
+// e.g.,  [0,1,2].contains(2) == true
+//        [0,1,2].contains('spam') == false
+Array.prototype.contains = function(obj) {
+  for (var i = 0; i < this.length; i++) {
+    if (this[i] == obj) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/*****************************************************/
+/*****************************************************/
+function init() {
+  BUFFER = [];
+  bp = 0;
+  var el = document.getElementById('p1');
+  el.innerHTML = "";
+  el.value = "";
+  
+  el = document.getElementById('comet');
+  el.innerHTML = "";
+  el.value = "";
+
+  document.getElementById('room').value = myroomid;
+  document.getElementById('password').value = mypassword;
+  //this.onclick=null;
+  
+
+  //backspace space percent single quote
+  //var SPECIAL = [8, 32, 37, 39, 222];
+  var SPECIAL = [8];
+  
+	el = document.getElementById('captions');
+  el.innerHTML = "";
+  el.value = "";
+  
+  
+  //el.onkeydown = handleKey(function(k) {return SPECIAL.contains(k)});
+  //el.onkeypress = handleKey(function(k) {return !SPECIAL.contains(k)});
+  //el.onkeyup = null;
+
+	stopPollingFlag = true;
+	stopSendingFlag = false;
+
+  timerEventVar = setTimeout("dumpBuffer()",TIMEOUT);
+}
+
+/*****************************************************/
+/*****************************************************/
+
+// closure for onkey event handlers
+// * parameter must be a compare function that
+// * returns true IFF this events keyCode should be recorded
+function handleKey(fcmpkey) { return function(e) {
+  var e = e || event;
+  var key = e.keyCode ? e.keyCode : e.charCode;
+  if (fcmpkey(key)) {
+    BUFFER.push(key);
+	 bp++;
+	/*
+    if (e.preventDefault) {
+      e.stopPropagation();
+      e.preventDefault();
+    } else {
+      e.cancelBubble = true;
+      e.returnValue = false;
+    }
+	*/
+    //appendChar(document.getElementById('captions'));
+  }
+};}
+
+/*****************************************************/
+/*****************************************************/
+//
+// append a single character from BUFFER to an elements innerHTML
+var ENTITIES = {
+	13 : "\r\n"
+}
+//   222 : "'"
+//   13 : '<br />',
+//    38 : '&amp;',
+//    60 : '&lt;',
+//    62 : '&gt;',
+//	39 : "'"
+
+
+/*****************************************************/
+/*****************************************************/
+function appendChar(el) {
+  if (BUFFER[bp] == 8) {
+    appendBackspace(el);
+  } else if (BUFFER[bp] in ENTITIES) {
+    el.innerText += "\n";
+  } else {
+    el.innerText += String.fromCharCode(BUFFER[bp]);
+  }
+/*    } else if (BUFFER[bp] in ENTITIES) {
+    el.innerHTML += ENTITIES[BUFFER[bp]];
+  } else {
+    el.innerHTML += String.fromCharCode(BUFFER[bp]);
+  }
+*/
+  
+  bp++;
+}
+
+/*****************************************************/
+/*****************************************************/
+function appendBackspace(el) {
+	var plength = el.innerText.length;
+	el.innerText = el.innerText.substr(0, plength - 1);
+	
+	/*
+  var endpointer = 1;
+  var plength = el.innerHTML.length;
+  for (var i in ENTITIES) {
+    var entity = ENTITIES[i];
+    var entityCheck = el.innerHTML.substr(plength - entity.length)
+    if (entity == entityCheck) {
+      endpointer = entity.length;
+      break;
+    }
+  }
+  el.innerHTML = el.innerHTML.substr(0, plength - endpointer);
+  */
+}
+
+
+/*****************************************************/
+/*****************************************************/
+function dumpBuffer() {
+	debug("::dumpBuffer:: start");
+	var i = 0;
+	var diffIndex = 0;
+	var newText = "";
+	var str = "";
+
+	if (stopSendingFlag == false) {
+		
+		curText = document.getElementById('captions').value;
+		if (curText == null) curText = "";
+		
+		//start
+		////xor strings to find first difference
+		//result = oldText ^ curText;
+		
+		//if (curText == oldText) do nothing
+		
+		curTextLen = curText.length;
+		//find position of first difference
+		//*********---start diffIndex at perhaps (oldTextLen - nnn)   where nnn is the max number of chars that can be changed per timerloop
+		//or..
+		//if string becomes larger than (chunk) size  xxx, could compare subsets of string < (oldTextLen - nnn) with a straight "if (str1subset == str2subset)" 
+		//to better hone in on when to do the char by char check
+
+		for (diffIndex = 0; diffIndex < oldTextLen && diffIndex < curTextLen; diffIndex++) {
+			if (oldText.charAt(diffIndex) != curText.charAt(diffIndex)) {
+				break;
+			}
+		}
+		if ((diffIndex < oldTextLen) || (diffIndex < curTextLen)) {
+			//diff starts at diffIndex
+
+			//get number of backspaces to send
+			for (i = oldTextLen - diffIndex; i > 0; i--) {
+				newText += "\b";
+			}
+			
+			//get string to send
+			newText += curText.substring(diffIndex);
+			str = hexEncoder(newText);
+			//update
+			oldText = curText;
+			oldTextLen = curTextLen;
+			
+		//end
+			//display codes
+			var el = document.getElementById('p1');
+			el.innerHTML += str  + "<br />";
+			//el.value = "";
+			el.scrollTop = el.scrollHeight;
+		
+			//document.getElementById('d1').innerHTML = document.getElementById('d1').innerHTML;
+			//xmlhttpPost("capreceiver",encodeURI(newText));
+			var captionStr = "admincmd=caption&adminpwd=" + mypassword + "&roomid=" + myroomid ;
+			//xmlhttpPost("http://" + document.getElementById('capcor').value +":8080/capreceiver",captionStr + "&caption=" + str);
+			xmlhttpPost("capreceiver",captionStr + "&caption=" + str);
+		}
+	}
+	timerEventVar = setTimeout("dumpBuffer()",TIMEOUT);
+		//} 
+		//document.getElementById('p0').innerHTML = "URL=[" + url + "] RoomID=[<?echo $roomid;?>]  pos=[" + oldTextLen + "]";
+		//pollingTimerEvent = setTimeout('postIt()',300);
+	//}
+	debug("::dumpBuffer:: done");
+}
+
+	
+
+//////////////////////////////////////////
+//////////////////////////////////////////
+	var stopPollingFlag = false;
+	var stopSendingFlag = false;
+
+	var immediatePollRequested = false;
+	var pollingTimerEvent;
+	var inPollRequest = false;
+
+/////////////////////////////////////////
+//////////////////////////////////////////
+function pollNow() {
+	
+	debug1("::PollNow:: begin");
+	immediatePollRequested = true;
+	clearTimeout(pollingTimerEvent);
+	polling();
+	debug1("::PollNow:: done");
+	
+}
+
+//////////////////////////////////////////
+//////////////////////////////////////////
+function polling() {
+	document.getElementById('pollmsg').innerHTML = "";
+	document.getElementById('pollmsg').value = "";
+
+	debug1("::polling:: begin");
+	if (stopPollingFlag == false) {
+		document.getElementById('pollmsg').innerHTML = "polling";
+		if (!inPollRequest) {
+			//xmlhttpPoll("http://" + document.getElementById('capcor').value +":8080/capreceiver", "&last=" + CurrentPosition);
+			xmlhttpPoll("capreceiver", "&last=" + CurrentPosition);
+		}
+		pollingTimerEvent = setTimeout('polling()',500);
+	}
+	debug1("::polling:: done");
+	
+}
+
+//////////////////////////////////////////
+//////////////////////////////////////////
+function startPolling() {
+	stopPollingFlag = false;
+	polling();
+}
+
+//////////////////////////////////////////
+//////////////////////////////////////////
+function stopPolling() {
+	stopPollingFlag = true;
+	document.getElementById('pollmsg').innerHTML = "";
+	document.getElementById('pollmsg').value = "";
+	debug("should be stopped");
+}
+
+//////////////////////////////////////////
+//////////////////////////////////////////
+function doRoom(cmd) {
+	
+	stopPolling();
+	myroomid = document.getElementById('room').value; 
+	mypassword = document.getElementById('password').value;
+	var str = "admincmd=" + cmd + "&adminpwd=" + mypassword + "&roomid=" + myroomid;
+
+	//xmlhttpPost("http://" + document.getElementById('capcor').value +":8080/capreceiver",str);
+	xmlhttpPost("capreceiver",str);
+
+	//xmlhttpPost("http://" + document.myform.capcor.value +"/:8080/capreceiver","");
+	
+}//////////////////////////////////////////
+
+function createRoom() {
+	
+	doRoom("create");
+	
+}
+//////////////////////////////////////////
+//////////////////////////////////////////
+function openRoom() {
+	
+		doRoom("open");
+	
+}
+//////////////////////////////////////////
+//////////////////////////////////////////
+function closeRoom() {
+	
+	doRoom("close");
+	
+}
+//////////////////////////////////////////
+//////////////////////////////////////////
+function clearRoom() {
+	
+	doRoom("reset");
+	clearPoll();
+	clearCodes();
+	clearCaptions();
+	startPolling();
+	
+}
+
+//////////////////////////////////////////
+//////////////////////////////////////////
+function clearCaptions() {
+	document.getElementById('pollmsg').innerHTML = "";
+	document.getElementById('captions').value = '';
+}
+
+//////////////////////////////////////////
+//////////////////////////////////////////
+function clearCodes() {
+	document.getElementById('p1').innerHTML = '';
+	document.getElementById('p1').value = '';
+}
+
+
+//////////////////////////////////////////
+//////////////////////////////////////////
+function clearPoll() {
+	document.getElementById('comet').innerHTML = '';
+	document.getElementById('comet').value = '';
+}
+
+//////////////////////////////////////////
+//////////////////////////////////////////
+function reinit() {
+	closeRoom();
+	init();
+	openRoom();
+}
+
+
+
+</script>
+
+</head>
+
+<body>
+<div id="container">
+<div class="heading">
+<p><button  onclick="reinit()">Re-Initialize </button>&nbsp; </p>
+
+<p>
+<!-- Server: <INPUT TYPE="text" id="capcor" VALUE="capcor.trace.wisc.edu" SIZE="30">&nbsp;&nbsp;&nbsp;<br/>
+-->
+Room: <INPUT TYPE="text" id="room" VALUE="" SIZE="10"> &nbsp;&nbsp;&nbsp;<br/>
+Admin Password: <INPUT TYPE="password" id="password" VALUE="" SIZE="5"> &nbsp;&nbsp;&nbsp;<br/>
+ &nbsp;&nbsp;<button  onclick="createRoom();">Create/Join </button>&nbsp;
+  &nbsp;&nbsp;<button  onclick="openRoom();">Open/Join </button>&nbsp;
+   &nbsp;&nbsp;<button  onclick="closeRoom();">Close </button>&nbsp;
+   &nbsp;&nbsp;<button  onclick="clearRoom();">Clear </button>&nbsp;
+</p>
+
+
+
+
+</div>
+<div class="notification"><p id="message"></p>
+</div>
+<div class="col1">
+<p>Enter Text</p>
+<textarea cols=35 name="captions" id="captions" onfocus="moveCursor(this)" onclick="moveCursor(this)" rows=30  ></textarea>
+</div>
+
+<div class="col2outer">
+
+<!--
+<div class="col1inner"><p>Caption Codes Sent</p>
+<textarea cols=50 name="codes" id="p1" onfocus="moveCursor(this)" onclick="moveCursor(this)" rows=30  ></textarea>
+</div>
+-->
+<div class="col1inner"><p>&nbsp;&nbsp;</p>&nbsp;<button  onclick="clearCodes();">Clear</button>
+<p>Caption Codes Sent</p>
+<div id="p1" style="width:90%;height:400px;overflow-y:scroll;" ></div>
+</div>
+
+<div class="col2inner"><p>&nbsp;<button  onclick="startPolling()">Start Polling</button> &nbsp;&nbsp;
+<button  onclick="stopPolling()">Stop Polling</button>&nbsp;&nbsp;<span id="pollmsg"></span></p>
+&nbsp;<button  onclick="clearPoll()">Clear</button>
+<p>Comet Codes Received</p>
+<div id="comet" style="width:90%;height:400px;overflow-y:scroll;" ></div>
+</div>
+<!--
+<div class="col2inner"><p>Comet Codes Received</p>
+<textarea cols=50 name="comet" id='comet' onfocus="moveCursor(this)" onclick="moveCursor(this)" rows=30  ></textarea>
+</div>
+-->
+</div>
+</div>
+
+<!--
+Enter text: <textarea cols=30 name="captions" id="captions" rows=30 onfocus="moveCursor(this)"  onclick=initEditable();></textarea>
+-->
+<!--
+<div id='d1'>
+
+	<p id='p0'>URL=[<?echo $url;?>] RoomID=[<?echo $roomid;?>] </p>
+
+</div>
+-->
+
+
+<script type="text/javascript" defer>
+init();
+</script>
+</body>
+</html>

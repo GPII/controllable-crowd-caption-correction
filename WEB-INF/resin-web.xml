@@ -6,8 +6,8 @@
     <driver>
       <type>com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource</type>
       <url>jdbc:mysql://127.0.0.1:3306/''sistema''</url>
-      <user>''oatts''</user>
-      <password>''tcoat!e$''</password>
+      <user></user>
+      <password></password>
     </driver>
 
 
@@ -20,14 +20,19 @@
        <url>jdbc:sqlserver://localhost:1433;databaseName=Reports </url> 
      </driver>
   </database>
-
+-->
 <servlet-mapping url-pattern="/comet"
                    servlet-class="example.TestCometServlet"
                    async-supported="true"/>
--->
+
 <servlet-mapping url-pattern="/capreceiver"
                    servlet-class="capreceiver.CapReceiver"
                    async-supported="true"/>
+
+
+<welcome-file-list>
+	<welcome-file>newlogin.htm</welcome-file>
+</welcome-file-list>
 
 <!--
 <servlet-mapping url-pattern="/jcomet"

@@ -16,5 +16,4 @@ public interface Handlers {
 	
 		void handleProcessing(HttpServletRequest request);
 		void init (HttpServletRequest request);
-		public void setMeetingRoom (MeetingRoom mr);
 }
