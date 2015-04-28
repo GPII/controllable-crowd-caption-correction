@@ -439,33 +439,7 @@ function getElementPosition(element) {
     return { x: xPosition, y: yPosition };
 }
 
-//========================================================//
-//========================================================//
-function getPreviousEditableSpan(id) {
-	//get previous editable span of paragraph
-	var returnVal = id;
-	var aSpan;
-
-	if ((aSpan = document.getElementById(id)) != null) {
-		while (true) {
-			if ((aSpan = aSpan.previousSibling) == null) {
-				//at beginning of paragraph
-				break;
-			} else if (spanIsMarkedTextDeleted(aSpan)) {
-				//stop 
-				break;
-			} else if (aSpan.firstChild != null) {
-				//found an existing text node - assume not empty so done
-				returnVal = aSpan.id;
-				break;
-			} else {
-				//no text node so save id and keep going
-			}
-		}
-	}
-	return returnVal;
-}
-
+/*
 //========================================================//
 //========================================================//
 function getLastEditableSpan(elem) {
@@ -485,6 +459,7 @@ function getLastEditableSpan(elem) {
 	}
 	return last;
 }
+*/
 
 //========================================================//
 //========================================================//
@@ -500,6 +475,7 @@ function determineWhatWeClickedOn(event) {
 	var lastSpan;
 	var lastSpanPos;
 	var mousePos;
+	var last;
 
 	
 	var elem = event.target;
@@ -508,7 +484,7 @@ function determineWhatWeClickedOn(event) {
 	//FIX
 	
 	//
-	
+	//NOTE:  If there is not at least one span in the paragraph that is editable (i.e. text node not missing), then there won't be a paragraph mark to click on on the paragraph.  If the first span of the paragraph is not editable, then for sure the newspeaker won't be showing.  (it might not be showing for other reasons as well.) So, if we got here, the user clicked on something that can be associated with a span.
 	//see if a special paragraph
 	if ( (elem != null) && (elem.nodeName === "P") && ((elem.getAttribute(NEWSPEAKER_ATTR) != null) || (elem.getAttribute(SPECIALPARAFOLLOWS_ATTRIBUTE) != null) )) {
 		//okay, it is special.  Find out where clicked
@@ -516,7 +492,8 @@ function determineWhatWeClickedOn(event) {
 		//get first span of paragraph
 		firstSpan = elem.firstChild;
 		//get last editable span of paragraph
-		lastSpan = getLastEditableSpan(elem);
+		//lastSpan = getLastEditableSpan(elem);
+		lastSpan = elem.lastChild;;
 		
 		//Could happend if corrector deletes spans
 		if ((firstSpan != null) && (lastSpan != null)) {
@@ -524,7 +501,6 @@ function determineWhatWeClickedOn(event) {
 			lastSpanPos = getElementPosition(lastSpan);
 			
 			//mousePos = {x : paraPos.x + event.offsetX, y : paraPos.y + event.offsetY};
-
 			mousePos = {x : event.clientX, y : event.clientY};
 			
 			/*until we narrow down width of new speaker or paragraph, we will use the more lenient one 
@@ -550,14 +526,30 @@ function determineWhatWeClickedOn(event) {
 				//we clicked near paragraph end;  //end mark always on same line as last displayed span
 				if (event.target.getAttribute(SPECIALPARAFOLLOWS_ATTRIBUTE) != null) {
 					result = "paragraph";
-					lowId = lastSpan.getAttribute("id");
-					highId = lowId;
-					//move high id to next paragraph span if one there.
-					if ((elem = elem.nextSibling) != null) {
-						if ((firstSpan = elem.firstChild) != null) {
-							highId = firstSpan.getAttribute("id");
+					//high gets last span
+					highId = lastSpan.getAttribute("id");
+					
+					last = lastSpan;
+					while (last != null) {
+						if (last.firstChild == null) {
+							//part of edit group.  backup until get to main span
+							last = last.previousSibling;
+						} else {
+							break;
 						}
 					}
+					if (last != null) {
+						lastSpan = last;
+					} //else lastSpan stays the last span
+					//low gets last edit group
+					lowId = lastSpan.getAttribute("id");
+
+					////move high id to next paragraph span if one there.
+					//if ((elem = elem.nextSibling) != null) {
+					//	if ((firstSpan = elem.firstChild) != null) {
+					//		highId = firstSpan.getAttribute("id");
+					//	}
+					//}
 				}
 			}
 		}
@@ -568,7 +560,7 @@ function determineWhatWeClickedOn(event) {
 	
 	//if "paragraph", 
 	//		lowspan = id of last edit group of paragraph (may be a deleteall)
-	//		highspan = lowspan OR id of first span of next paragraph, if there is one
+	//		highspan = last span of paragraph 
 	
 	
 	return {"target" : result, "lowspan" : parseInt(lowId,10), "highspan" : parseInt(highId,10)};
@@ -662,20 +654,20 @@ function setMouseUpSpanId(event) {
 									//clicked on first span.  See if new speaker already there
 									if (tempElem.parentNode.getAttribute(NEWSPEAKER_ATTR) == null) {
 										//okay to proceed
-										doQuickClickTwoWayExpanded(mouseUpSpanId, NEWSPEAKER_COMMAND);
+										doQuickClickNewParaSpeaker(mouseUpSpanId, NEWSPEAKER_COMMAND);
 									} // else skip, cuz already there
 								} else {
-									doQuickClickTwoWayExpanded(mouseUpSpanId, NEWSPEAKER_COMMAND);
+									doQuickClickNewParaSpeaker(mouseUpSpanId, NEWSPEAKER_COMMAND);
 								}
 							}
 							break;
 						case "key_M":
 							if (userInput.mouseDownSpanId == mouseUpSpanId) {
-								//doQuickClickTwoWayExpanded(mouseUpSpanId, PARAGRAPH_COMMAND);
+								//doQuickClickNewParaSpeaker(mouseUpSpanId, PARAGRAPH_COMMAND);
 								//proceed only if NOT clicked on first span of a paragraph
 								tempElem = document.getElementById(mouseUpSpanId);
 								if (tempElem.parentNode.firstChild != tempElem) {
-									doQuickClickTwoWayExpanded(mouseUpSpanId, PARAGRAPH_COMMAND);
+									doQuickClickNewParaSpeaker(mouseUpSpanId, PARAGRAPH_COMMAND);
 								}
 							}
 							break;
@@ -730,10 +722,12 @@ function setMouseUpSpanId(event) {
 					result = determineWhatWeClickedOn(userInput);
 					if ((result.target == "paragraph") && (userInput.key == "key_R")) {
 						//restore paragraph
-						end = getEndOfEditGroup(result.highspan,false);
-						if (isAnyInRangeLocked(result.lowspan,end) == false) {
-							doQuickParagraphDelete(result.lowspan,end, PARADELETE_COMMAND);
-						}
+						//end = getEndOfEditGroup(result.highspan,false);
+						//if (isAnyInRangeLocked(result.lowspan,end) == false) {
+						//	doQuickParagraphDelete(result.lowspan,end, PARADELETE_COMMAND);
+						//}
+						//low = edit group , high = last span
+						doQuickParagraphDelete(result.lowspan,result.highspan, PARADELETE_COMMAND);
 					}
 				}
 			} else {
@@ -900,27 +894,45 @@ function doQuickClickBasic(start,command) {
 
 //========================================================//
 //========================================================//
-function doQuickClickTwoWayExpanded(clickedId,command) {
-	debug('doQuickClickTwoWayExpanded:: START');
-	debug('doQuickClickTwoWayExpanded::start=:'+clickedId+'  :command=:'+command);
+function doQuickClickNewParaSpeaker(clickedId,command) {
 
-	//need to find where next span is to capitalize - not necessarily to deal with stale issue
+	//need to find where last span is to apply punctuation - not necessarily to deal with stale issue
+	//so we want to lock it if we can, along with span group clicked on
+	//start = previous edit group (stop if deleteall found) or span clicked on
+	//end = end of edit group clicked on
+	//special = span clicked on
+	var aSpan;
 	var end = clickedId;
 	var start = clickedId;
 	
-	//don't allow quick clicks on deleteall spans
-	if (!spanIsMarkedTextDeleted(document.getElementById(clickedId))) {
-		//not okay to pass around a deleteall span for capitalization
+	if (((aSpan = document.getElementById(clickedId)) != null) && (!spanIsMarkedTextDeleted(aSpan))) {
+		//don't allow quick clicks on deleteall spans (no reason to allow and can cause further complications)
 		end = getEndOfEditGroup(clickedId, false);
-		//get span before
-		start = getPreviousEditableSpan(clickedId);
+		
+		//get span before to put punctuation on
+		while (true) {
+			if ((aSpan = aSpan.previousSibling) == null) {
+				//at beginning of paragraph
+				break;
+			} else if (spanIsMarkedTextDeleted(aSpan)) {
+				//stop 
+				break;
+			} else if (aSpan.firstChild != null) {
+				//found an existing text node - assume not empty so done
+				start = aSpan.id;
+				break;
+			} else {
+				//no text node so keep going
+			}
+		}
+		//start either holds span clicked on or previous edit group (not deleteall)
+	
 		//make sure none of the range is locked
 		if (isAnyInRangeLocked(start,end) == false) {
 			editState.documentVersion = userInput.docver;
 			sendCommand(start, end, command, editState.documentVersion, hexEncoder("" + clickedId));
 		}
 	}
-	debug('doQuickClickTwoWayExpanded:: END');
 }
 
 //========================================================//
@@ -982,7 +994,7 @@ function doQuickSpeakerEdit(id,text,command) {
 function doQuickSpeakerDelete(start,end,command) {
 	//debug('doQuickSpeakerDelete:: START');
 
-	doDialog(start, end, command, "", "Delete speaker text?", "Delete");
+	doDialog(start, end, command, "", "", "Delete speaker text?", "Delete");
 
 	//debug('doQuickSpeakerDelete:: END');
 }
@@ -990,30 +1002,37 @@ function doQuickSpeakerDelete(start,end,command) {
 //========================================================//
 //========================================================//
 function doQuickParagraphDelete(start,end,command) {
-	//debug('doQuickParagraphDelete:: START');
-
+	var nsFlag = "";
+	var aSpan;
 	var tmpElem;
 	var question;
+	var aPara;
 	
-	//check if just paragraph or speaker and paragraph.  don't know if end in current para or next so use start
-	tmpElem = document.getElementById(start);
-	if ((tmpElem != null) && ((tmpElem = tmpElem.parentNode) != null) && ((tmpElem = tmpElem.nextSibling) != null) && (tmpElem.getAttribute(NEWSPEAKER_ATTR) != null)) {
-		question = "Delete paragraph break and \"Speaker\" text?";
-	} else {
-		question = "Delete paragraph break?";
+	//start = edit group, end = last span
+	//assume para delete only, to start with
+	question = "Delete paragraph break?";
+	
+	//see if there is a span in the next paragraph
+	if (((aSpan = document.getElementById(end)) != null) && ((aPara = aSpan.parentNode.nextSibling) != null) && ((aSpan = aPara.firstChild) != null)) {
+		//found a span.  Put its ID in data so we can remove attributes on late joiners
+		nsFlag = aSpan.id;
+		//move end to end of edit group of this element
+		end = getEndOfEditGroup(nsFlag, false);
+		//see if attribute there
+		if (aPara.getAttribute(NEWSPEAKER_ATTR) != null) {
+			question = "Delete paragraph break and \"Speaker\" text?";
+		}
+		
 	}
-
-	doDialog(start, end, command, "", question, "Delete");
-
-	//debug('doQuickParagraphDelete:: END');
+	if (isAnyInRangeLocked(start, end) == false) {
+		doDialog(start, end, command, nsFlag, "", question, "Delete");
+	}
 }
 
 
 //========================================================//
 //========================================================//
 function doQuickClickRangeRestore(start,end,command) {
-	//debug('doQuickClickRangeRestore:: START');
-
 	var data;
 	var displayText;
 
@@ -1026,17 +1045,14 @@ function doQuickClickRangeRestore(start,end,command) {
 		if (data.restoreText != "") {
 			displayText = "ORIGINAL: " + data.restoreText + "<br><br>CURRENT: " + data.currentText + "<br><br>";
 			
-			doDialog(start, end, command, displayText, "Restore Original?", "Restore");
+			doDialog(start, end, command, "", displayText, "Restore Original?", "Restore");
 		}
 	}
-	//debug('doQuickClickRangeRestore:: END');
 }
 
 //========================================================//
 //========================================================//
-function doDialog(start,end,command, text, question, button) {
-	//debug('doDialog:: START');
-
+function doDialog(start,end,command, data, text, question, button) {
 	editState.editing = true;
 	editState.lockRequestPending = true;
 	editState.documentVersion = userInput.docver;
@@ -1060,7 +1076,7 @@ function doDialog(start,end,command, text, question, button) {
 			editState.editing = false;
 			
 			//send command
-			sendCommand(editState.lowerEditRange, editState.upperEditRange, command, editState.documentVersion, "");
+			sendCommand(editState.lowerEditRange, editState.upperEditRange, command, editState.documentVersion,  hexEncoder("" + data));
 		}
 	};
 	document.getElementById("ov1cancel").onclick= function () {
@@ -1073,7 +1089,6 @@ function doDialog(start,end,command, text, question, button) {
 	//display dialog
 	document.getElementById("overlay1").style.visibility = "visible";
 
-	debug('doDialog:: END');
 }
 
 
@@ -2320,15 +2335,8 @@ function client_update(dataStr) {
 			///////////////////////////////////////////////////////////////////////////////
 			} else if (command==RESTORE_COMMAND) {
 				try {
-//					//check if edit is stale before applying
-//					aSpan = document.getElementById(startRange);
-//					if ((aSpan != null) && (aSpan.firstChild != null)) {
-//						if (checkForPossibleStaleEditEnd(endRange) == 1) {
-
-							//should handle unlocks
-							restoreRange(startRange,endRange);
-//						}
-//					}
+					restoreRange(startRange,endRange);
+					unlockRange(startRange,endRange);
 				} catch (e) {
 					errorOut("Error in RESTORE_COMMAND. start=[" + startRange + "]  end=[" + endRange + "]\n" + e);
 				}
@@ -2558,19 +2566,61 @@ function client_update(dataStr) {
 				} catch (e) {
 					errorOut("Error in LOWERCASE_COMMAND. start=[" + startRange + "]  end=[" + endRange + "]\n" + e);
 				}
-	/*
+
 			////////////////////////////////////////////////////////////////////////////////
 			} else if (command==PARADELETE_COMMAND) {
-				//note newspeaker will be removed by default if it exists on next paragraph
 				//startRange holds id of last edit group before paragraph break
-				//endRange holds either end of startRange edit group, or end of first edit group after para break
+				//endRange holds either end of startRange edit group(last span of paragraph), or end of first edit group after para break
+				//correction = 1st span of after para break
+				
+				//if correction == "" then make sure newspeaker attribute cleared
+				//use endRange to get parent paragraph.  
+				//else use correction to get parent previousSibling 
+				//don't delete paragraph if no previous siblings
+				//handle attributes
 				try {
-					if (((aSpan = document.getElementById(startRange)) != null) ) {
-						if ((curPara = aSpan.parentNode) != null) {
+					if (correction == "") {
+						//There isn't a span in the paragraph to be deleted so there shouldn't be a new speaker
+						//or anything else after, but we'll make sure.  Also, no spans to move.  Let's see what WE have
+						if ((aSpan = document.getElementById(endRange)) != null) {
+							//Okay, we have at least the last span of the paragraph in front of the break
+							curPara = aSpan.parentNode;
 							if ((tempPara = curPara.nextSibling) != null) {
+								//There is a paragraph after; just no spans
 								//never delete captioner paragraph, so double check
 								if (tempPara.getAttribute(CORRECTORPARA_ATTRIBUTE) != null) {
-									//okay, ready to go.  Start moving from tempPara to curPara
+									//delete tempPara
+									curPara.parentNode.removeChild(tempPara);
+									//clear attributes on curPara if one
+									curPara.removeAttribute(SPECIALPARAFOLLOWS_ATTRIBUTE);
+								} //else don't delete; Should have never been able to get here
+							} else {
+								//there is no next paragraph so no paragraph to delete.  fix attributes
+								curPara.removeAttribute(SPECIALPARAFOLLOWS_ATTRIBUTE);
+							}
+						} else {
+							//we don't have a span from the previous paragraph; no span in paragraph to delete.
+							//How do we know where we are?  Only way this happens is if we are in paragraph P0
+							//so nothing really to do, but to be sure we are clean, we remove attributes, if any
+							tempPara = document.getElementById("doccontent").firstChild;
+							tempPara.removeAttribute(SPECIALPARAFOLLOWS_ATTRIBUTE);
+							tempPara.removeAttribute(SPEAKER_TEXT_FIELD_ATTR);
+							tempPara.removeAttribute(NEWSPEAKER_ATTR);
+						}
+					} else {
+						//There is a span in paragraph to be deleted.  Let's see what WE have
+						correction = parseInt(correction,10);
+						if ((aSpan = document.getElementById(endRange)) != null) {
+							//we have a span in the paragraph to be deleted.  get paragraph
+							tempPara = aSpan.parentNode;
+							//we have the paragraph.  
+							//Let's get the previous paragraph to move spans to
+							if ((curPara = tempPara.previousSibling) != null) {
+								//okay, we have both paragraphs.
+								//never delete captioner paragraph, so double check
+								if (tempPara.getAttribute(CORRECTORPARA_ATTRIBUTE) != null) {
+									//okay, we can delete it. 
+									//Start moving from tempPara to curPara
 									aSpan = tempPara.firstChild;
 									while (aSpan != null) {
 										//get ptr to next sib before we lose it
@@ -2582,43 +2632,51 @@ function client_update(dataStr) {
 									}
 									//delete tempPara
 									curPara.parentNode.removeChild(tempPara);
-								} else {
-									//next para was not special.  Remove attribute since it is wrong
-									curPara.removeAttribute(SPECIALPARAFOLLOWS_ATTRIBUTE);
-								}
+									//find out what follows
+									//okay, do we have a special again?
+									tempPara = curPara.nextSibling;
+									if ((tempPara != null) && (tempPara.getAttribute(CORRECTORPARA_ATTRIBUTE) != null)) {
+										if (tempPara.getAttribute(NEWSPEAKER_ATTR) != null) {
+											//add attribute on cur
+											curPara.setAttribute(SPECIALPARAFOLLOWS_ATTRIBUTE,PARAGRAPH_PLUS_MARK);
+										} else {
+											//add attribute on cur
+											curPara.setAttribute(SPECIALPARAFOLLOWS_ATTRIBUTE,PARAGRAPH_MARK);
+										}
+									} else {
+										//remove attribute (if any)
+										curPara.removeAttribute(SPECIALPARAFOLLOWS_ATTRIBUTE);
+									}
+								} //else don't delete; Should have never been able to get here
 							} else {
-								//no following paragraph so remove attribute if any
-								curPara.removeAttribute(SPECIALPARAFOLLOWS_ATTRIBUTE);
+								//we don't have the previous paragraph to move things to so not much to do but clear attributes
+								//that normally would have been deleted when we deleted the paragraph
+								tempPara.removeAttribute(SPEAKER_TEXT_FIELD_ATTR);
+								tempPara.removeAttribute(NEWSPEAKER_ATTR);
 							}
-						}
-					}
-					//if we didn't have startRange id, see if we have endRange id
-					//is so, 
-									
-					//okay, do we have a special again?
-					tempPara = curPara.nextSibling;
-					if ((tempPara != null) && (tempPara.getAttribute(CORRECTORPARA_ATTRIBUTE) != null)) {
-						if (tempPara.getAttribute(NEWSPEAKER_ATTR) != null) {
-							//add attribute on cur
-							curPara.setAttribute(SPECIALPARAFOLLOWS_ATTRIBUTE,PARAGRAPH_PLUS_MARK);
 						} else {
-							//add attribute on cur
-							curPara.setAttribute(SPECIALPARAFOLLOWS_ATTRIBUTE,PARAGRAPH_MARK);
+							//we don't have a span in range sent, so don't do anything cuz nothing to do
 						}
-					} else {
-						//remove attribute (if any)
-						curPara.removeAttribute(SPECIALPARAFOLLOWS_ATTRIBUTE);
 					}
-
 					//clear locked indicator
 					unlockRange(startRange,endRange);
 				} catch (e) {
 					errorOut("Error in PARADELETE_COMMAND. start=[" + startRange + "]  end=[" + endRange + "]\n" + e);
 				}
-	*/
+	/*
 	
 			////////////////////////////////////////////////////////////////////////////////
 			} else if (command==PARADELETE_COMMAND) {
+				//startRange holds id of last edit group before paragraph break
+				//endRange holds either end of startRange edit group(last span of paragraph), or end of first edit group after para break
+				//correction = 1st span of after para break
+				
+				//if correction == "" then make sure newspeaker attribute cleared
+				//	use endRange to get parent paragraph.  delete nextsibs and clear attribute
+				//else use correction to get parent previousSibling 
+				//don't delete paragraph if no previous siblings
+				//handle attributes
+				
 				//note newspeaker will be removed by default if it exists on next paragraph
 				//startRange holds id of last edit group before paragraph break
 				//endRange holds either end of startRange edit group, or end of first edit group after para break
@@ -2675,7 +2733,7 @@ function client_update(dataStr) {
 					errorOut("Error in PARADELETE_COMMAND. start=[" + startRange + "]  end=[" + endRange + "]\n" + e);
 				}
 				
-	
+	*/
 	
 			////////////////////////////////////////////////////////////////////////////////
 			} else if (command==SPEAKEREDIT_COMMAND) {
@@ -2700,8 +2758,9 @@ function client_update(dataStr) {
 				
 			////////////////////////////////////////////////////////////////////////////////
 			} else if (command==SPEAKERDELETE_COMMAND) {
+				//low = 1st span of paragraph
+				//high = end of edit group of low
 				try {
-					//use endRange as we know this will be on relevent paragraph
 					if (((aSpan = document.getElementById(endRange)) != null) ) {
 						//Get parent
 						if ((tempPara = aSpan.parentNode) != null) {
@@ -2729,11 +2788,8 @@ function client_update(dataStr) {
 			////////////////////////////////////////////////////////////////////////////////
 			} else if ((command==NEWSPEAKER_COMMAND) || (command==PARAGRAPH_COMMAND)) {
 				try {
-//					if (checkForPossibleStaleEdit(startRange, endRange) == 1) {
-						//if (((aSpan = document.getElementById(startRange)) != null) ) {
-						
-					//startRange is span id of word before span clicked on
-					//endRange is span id of last span in edit group of span clicked on
+					//startRange is edit group to apply punctuation to, or span clicked on if nothing to punctuate
+					//endRange is end of edit group of span clicked on
 					//correction holds span id of span clicked on
 					if ((correction != "") && ((aSpan = document.getElementById(correction)) != null)  && (!spanIsMarkedTextDeleted(aSpan)) && (aSpan.firstChild != null) ) {
 						//create new paragraph, but only if span not first in paragraph
@@ -2804,7 +2860,7 @@ function client_update(dataStr) {
 							}
 						}
 						//okay tag paragraphs appropriately
-							
+						//curPara is paragraph to apply newspeaker to
 						if (command == NEWSPEAKER_COMMAND) {
 							//mark it
 							curPara.setAttribute(NEWSPEAKER_ATTR,SHOWSPEAKER_TEXT);
@@ -2823,7 +2879,8 @@ function client_update(dataStr) {
 							if (curPara.getAttribute(CORRECTORPARA_ATTRIBUTE) != null) {
 								//put special paragraph marking on previous paragraph to indicate a corrector-generated paragraph follows
 								if ((tempPara = curPara.previousSibling) != null) {
-									curPara.setAttribute(SPECIALPARAFOLLOWS_ATTRIBUTE,PARAGRAPH_MARK);
+									//---### curPara.setAttribute(SPECIALPARAFOLLOWS_ATTRIBUTE,PARAGRAPH_MARK);
+									tempPara.setAttribute(SPECIALPARAFOLLOWS_ATTRIBUTE,PARAGRAPH_MARK);
 								}
 							}
 						}
@@ -2842,7 +2899,6 @@ function client_update(dataStr) {
 							}
 						}
 					}
-//					}
 				} catch (e) {
 					errorOut("Error in NEWSPEAKER_COMMAND/NEWPARAGRAPH command. start=[" + startRange + "]  end=[" + endRange + "]\n" + e);
 				}
