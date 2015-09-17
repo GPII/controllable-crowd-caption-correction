@@ -23,7 +23,7 @@
 	if ("<?php echo($debug); ?>" === "1") debugIt = true;
 	
 	var myroomid = "test2";
-	var mypassword = "password1234567890";
+	var mypassword = "";
 
 //////////////////////////////////////////
 	var stopSendingFlag = false;
