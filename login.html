@@ -2,11 +2,37 @@
 <html>
  <head>
   <title>Captions V3 Entrance</title>
+  <script>
+function getUrlParameter(sParam)
+{
+    var sPageURL = window.location.search.substring(1);
+    var sURLVariables = sPageURL.split('&');
+    for (var i = 0; i < sURLVariables.length; i++) 
+    {
+        var sParameterName = sURLVariables[i].split('=');
+        if (sParameterName[0] == sParam) 
+        {
+            return sParameterName[1];
+        }
+    }
+    return "";
+}
+
+function gotoroom()
+{
+	var roomidurl = getUrlParameter("room").replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "");
+	if (roomidurl.length > 0)
+	{
+		document.getElementById("roomidfield").value = roomidurl;
+		document.getElementById("captionsform").submit();
+	}
+}   
+  </script>
  </head>
 
- <body>
-  <form action="cccV3.php" method="post">
-Room ID: <input type=text name=room size=15><P>
+ <body onload="gotoroom()">
+  <form id="captionsform" action="cccV3.php" method="post">
+Room ID: <input type=text id="roomidfield" name=room size=15><P>
 
 For Correctors, please provide the following:<br>
 Password: <input type=password name=pwd size=15><br>
