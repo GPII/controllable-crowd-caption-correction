@@ -7,52 +7,49 @@
 
 <html>
 <head>
-<title>Caption Sender</title>
-	<? if ($debug == '1') { ?>
+	<title>CCC Room Manager V3</title>
 	<link rel="stylesheet" type="text/css" href="css/cccentry.css" />
-	<? } else { ?> 
-	<link rel="stylesheet" type="text/css" href="css/cccmobile.css" />
-	<? } ?>
-
-
 
 
 <script type="text/javascript" >
 
-	var debugIt = false;
-	if ("<?php echo($debug); ?>" === "1") debugIt = true;
-	
-	var myroomid = "test2";
-	var mypassword = "";
+var debugIt = false;
+if ("<?php echo($debug); ?>" === "1") debugIt = true;
+
+var myroomid = "";
+var mypassword = "";
 
 //////////////////////////////////////////
-	var stopSendingFlag = false;
-	var STUCKTIMERCHECKDEFAULT = 10;
-	var checkStuckCaption = STUCKTIMERCHECKDEFAULT;
-	var SENDTIMEOUT = 200;
-	var sendTimerEventVar;
-	var inPostRequest = false;
+var stopSendingFlag = true;   //---###//---### was false
+var STUCKTIMERCHECKDEFAULT = 10;
+var checkStuckCaption = STUCKTIMERCHECKDEFAULT;
+var SENDTIMEOUT = 200;
+var sendTimerEventVar;
+var inPostRequest = false;
+var enableTestingAllowed = false;
+var busyMsg = "Status: Busy...try again";
 
 //////////////////////////////////////////
-	//polling for commands from server
-	var CurrentPosition = 0;
-	var stopPollingFlag = true;
-	var immediatePollRequested = false;
-	var pollingTimerEvent;
-	var inPollRequest = false;
+//polling for commands from server
+var CurrentPosition = -1;
+var stopPollingFlag = true;
+var immediatePollRequested = false;
+var pollingTimerEvent;
+var inPollRequest = false;
+var meetingDocId = -1;
 
 //////////////////////////////////////////
-	//caption entry
-	var oldText ="";
-	var oldTextLen = 0;
-	var curText = "";
-	var curTextLen = 0;
+//caption entry
+var oldText ="";
+var oldTextLen = 0;
+var curText = "";
+var curTextLen = 0;
 
 ///////////////////////////////////////////
-	//for speech-to-text
-	var putArtificialDelimFlag = false;
-	var PUTDELIMTIMEOUT = 5000;
-	var putDelimCounter = new Date().getTime();
+//for speech-to-text
+var putArtificialDelimFlag = false;
+var PUTDELIMTIMEOUT = 5000;
+var putDelimCounter = new Date().getTime();
 
 
 /*******************************************************/
@@ -65,6 +62,7 @@ function debug(text) {
 	}
 }
 
+
 /*******************************************************/
 /*******************************************************/
 function debug1(text) {
@@ -72,13 +70,12 @@ function debug1(text) {
 }
 
 
-
 /*******************************************************/
 /*******************************************************/
-function xmlhttpPost(strURL,parameterStr) {
+function xmlhttpPost(strURL, parameterStr) {
 
 	debug('xmlhttpPost:: Entered with strURL = :'+strURL+'   parameterStr=:' + parameterStr);
-
+	
 	var MAXIMUM_WAITING_TIME = 15000; //milliseconds
 	var request = true;
 	var xmlHttpReq = null;
@@ -159,7 +156,7 @@ function xmlhttpPost(strURL,parameterStr) {
 			else if (this.readyState === 4) {
 				debug('xmlhttpPost::xmlHttpReq.readyState=:4');
 				///clearTimeout(requestTimer); //do not abort
-
+				
 				if (this.status == 200) {
 					
 					debug('xmlhttpPost::xmlHttpReq.status=:'+this.status);
@@ -170,10 +167,18 @@ function xmlhttpPost(strURL,parameterStr) {
 					debug('Error of some type - NOT status=200:  xmlhttpPost::xmlHttpReq.status=:'+this.status);
 					debug('xmlhttpPost::xmlHttpReq.statusText=:'+this.statusText);
 					debug('xmlhttpPost::xmlHttpReq.responseText=:'+this.responseText);
-
 				}
 				if (this.responseText != "") {
-					document.getElementById('message').innerHTML = "Status: " + this.responseText;
+					var postResponse = JSON.parse(this.responseText);
+					if ("adminrsp" in postResponse && "adminre" in postResponse) {
+						document.getElementById('message').innerHTML = "Status: " + postResponse.adminrsp + " - " + postResponse.adminre;
+						if (postResponse.adminrsp == "OK" && enableTestingAllowed == true) {
+							enableTesting();
+						}
+					} else {
+						document.getElementById('message').innerHTML = "Status: " + this.responseText;
+						enableTestingAllowed == false;
+					}
 				}
 				inPostRequest = false;
 			} else {
@@ -189,13 +194,14 @@ function xmlhttpPost(strURL,parameterStr) {
 		//debug("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee<br /> <br />");
 	}
 	inPostRequest = true;
-	xmlHttpReq.send(parameterStr );
+	xmlHttpReq.send(parameterStr);
 	debug ('xmlhttpPost:: END');
 }
 
+
 /*******************************************************/
 /*******************************************************/
-function xmlhttpPoll(strURL,parameterStr) {
+function xmlhttpPoll(strURL, parameterStr) {
 	//alert('ajax:' + parameterStr);
 	debug1('xmlhttpPoll:: Entered with strURL = :'+strURL+'   parameterStr=:' + parameterStr);
 	debug1('xmlhttpPoll:: Entered');
@@ -288,12 +294,14 @@ function xmlhttpPoll(strURL,parameterStr) {
 					debug1('xmlhttpPoll::xmlHttpReq.responseText=:'+this.responseText);
 					pollResponseStr = this.responseText;
 					
+					
+					/* //---###//---###//---###//---###//---###//---###
 					var tmpIndex;
 					if ((tmpIndex = pollResponseStr.indexOf("~OK;last=")) != -1) {
 						//command accepted.
 						//~OK;last=  9
 						var tmpIndex2 = pollResponseStr.indexOf('~',tmpIndex+9)
-						CurrentPosition = pollResponseStr.substring(tmpIndex+9,tmpIndex2);
+						CurrentPosition = pollResponseStr.substring(tmpIndex+9, tmpIndex2);
 						pollResponse = pollResponseStr.substring(tmpIndex2+1);
 						debug1("pollResponseStr: " + pollResponseStr);
 						debug1("pollResponse: " + pollResponse);
@@ -311,6 +319,44 @@ function xmlhttpPoll(strURL,parameterStr) {
 						//error of some type???
 						debug1('Error of some type:  xmlhttpPoll::xmlHttpReq.status=:200, pollResponseStr =:'+pollResponseStr);
 					}
+					*/ //---###//---###//---###//---###//---###//---###
+					var data = "";
+					if (pollResponseStr.charAt(0) == "{") {
+						pollResponse = JSON.parse(pollResponseStr);
+					} else {
+						var len = parseInt(pollResponseStr, 10);
+						var len2 = pollResponseStr.indexOf("{");
+						len = len2 + len;
+						var tmp = pollResponseStr.slice(len2,len);
+						pollResponse = JSON.parse(tmp);
+						data = pollResponseStr.slice(len);
+					}
+					if ((typeof pollResponse["adminrsp"]) == "undefined") {
+						if (meetingDocId != pollResponse["id"]) {
+							// Initial poll or meeting room reset
+							meetingDocId = pollResponse["id"];
+						} else if (pollResponse["resp"] == "accept") {
+							//if check against doc ID we sent
+							if (CurrentPosition < pollResponse["ver"]) {
+								if (data != "") {
+									var el = document.getElementById('capcorcommands');
+									el.value += data;
+									el.scrollTop = el.scrollHeight;
+								}
+								CurrentPosition = pollResponse["ver"];
+							}
+						} else {
+							//error of some type???
+							debug1('Error of some type:  xmlhttpPoll::xmlHttpReq.status=:200, pollResponseStr =:' + pollResponseStr);
+						}
+					} else {
+						// got some administrative response.  This is not good.  Skip processing.
+						debug1('Admin error of some type:  xmlhttpPoll::xmlHttpReq.status=:200, pollResponseStr =:' + pollResponseStr);
+					}
+					//---###//---###//---###//---###//---###//---###
+					
+					
+					
 				} else {
 					debug1('Error of some type - NOT status=200:  xmlhttpPoll::xmlHttpReq.status=:'+this.status);
 					debug1('xmlhttpPoll::xmlHttpReq.statusText=:'+this.statusText);
@@ -335,60 +381,17 @@ function xmlhttpPoll(strURL,parameterStr) {
 
 	inPollRequest = true;
 	immediatePollRequested = false;
+	
+	
+	/* //---###//---###//---###   ???
 	var tmpStr = parameterStr + '&room=' + myroomid;
 	xmlHttpReq.send(tmpStr );
+	*/ //---###//---###//---###
+	xmlHttpReq.send(parameterStr);
+	
+	
 	// self.xmlHttpReq.send('id=' + parameterStr);
 	debug1 ('xmlhttpPoll:: END');
-}
-
-
-/*****************************************************/
-/*****************************************************/
-function replacer(match, p1, p2, offset, theStr) {
-	if ((p2 == null) || (p2 == "")) {
-		//not a "non-word" so must be a word
-		return match;
-	} else {
-		var tmp = p2.charCodeAt(0);
-		if (tmp <= 15) {
-			return ("%0" + tmp.toString(16));
-		} else {
-			return ("%" + tmp.toString(16));
-		}
-	}
-}
-
-/*****************************************************/
-function hexEncoder(str) {
-	var tmpStr = "";
-	if (str != "") {
-		var re = /(\w)+|([\W])/g;
-		tmpStr +=  str.replace( re, replacer);
-	}
-	return tmpStr;
-}
-
-/*****************************************************/
-/*****************************************************/
-function moveCursor(element) {
-	element.selectionStart = element.selectionEnd = element.value.length;
-}
-
-
-/*****************************************************/
-/*****************************************************/
-function init() {
-	stopPollingFlag = true;
-	stopSendingFlag = true;
-	
-	clearCodes();
-	clearPoll();
-	clearCaptions();
-
-	document.getElementById('room').value = myroomid;
-	document.getElementById('password').value = mypassword;
-	sendTimerEventVar = setTimeout("dumpBuffer()",SENDTIMEOUT);
-	document.getElementById('message').innerHTML= "Status: ";
 }
 
 
@@ -400,8 +403,10 @@ function dumpBuffer() {
 	var diffIndex = 0;
 	var newText = "";
 	var str = "";
-	var captionStr = "admincmd=caption&adminpwd=" + mypassword + "&room=" + myroomid ;
-
+	var captionStr = "admincmd=caption&adminpwd=" + mypassword + "&room=" + myroomid;
+	
+	document.getElementById("pauseSending").checked = (stopSendingFlag == true);   //---###
+	
 	if (stopSendingFlag == false) {
 		
 		if (!inPostRequest) {
@@ -421,7 +426,7 @@ function dumpBuffer() {
 				//there is a difference...update putDelimCounter
 				//putDelimCounter = new Date().getTime();
 				//putArtificialDelimFlag = false;
-
+				
 				//get number of backspaces to send
 				for (i = oldTextLen - diffIndex; i > 0; i--) {
 					newText += "\b";
@@ -433,12 +438,14 @@ function dumpBuffer() {
 				//update
 				oldText = curText;
 				oldTextLen = curTextLen;
-
+				
 				//display codes
-				displayCodes(str);
-			
+				var el = document.getElementById('codes');
+				el.value += str + "\n";
+				el.scrollTop = el.scrollHeight;
+				
 				//captionStr = "admincmd=caption&adminpwd=" + mypassword + "&room=" + myroomid ;
-				xmlhttpPost("capreceiver",captionStr + "&caption=" + str);
+				xmlhttpPost("capreceiver", captionStr + "&caption=" + str);
 				checkStuckCaption = STUCKTIMERCHECKDEFAULT;
 			} else {
 				//no difference...see if we reached timeout for putting in an artificial space
@@ -451,47 +458,77 @@ function dumpBuffer() {
 				//}
 				if (--checkStuckCaption <= 0) {
 					//send whether we have anything or not to prod stuck caption
-					xmlhttpPost("capreceiver",captionStr + "&caption=" + str);
+					//---###   why would this be needed ???   //---###   xmlhttpPost("capreceiver", captionStr + "&caption=" + str);
 					checkStuckCaption = STUCKTIMERCHECKDEFAULT;
 				}
 			
 			}
-
+		
 		} //else wait another timeout cycle to try to send
 		
-		sendTimerEventVar = setTimeout("dumpBuffer()",SENDTIMEOUT);
+		sendTimerEventVar = setTimeout("dumpBuffer()", SENDTIMEOUT);
 	}
 }
 
-	
+
+/*****************************************************/
+/*****************************************************/
+function replacer(match, p1, p2, offset, theStr) {
+	if ((p2 == null) || (p2 == "")) {
+		//not a "non-word" so must be a word
+		return match;
+	} else {
+		var tmp = p2.charCodeAt(0);
+		if (tmp <= 15) {
+			return ("%0" + tmp.toString(16));
+		} else {
+			return ("%" + tmp.toString(16));
+		}
+	}
+}
+
+
+/*****************************************************/
+/*****************************************************/
+function hexEncoder(str) {
+	var tmpStr = "";
+	if (str != "") {
+		var re = /(\w)+|([\W])/g;
+		tmpStr +=  str.replace( re, replacer);
+	}
+	return tmpStr;
+}
+
+
+/*****************************************************/
+/*****************************************************/
+function moveCursor(element) {
+	element.selectionStart = element.selectionEnd = element.value.length;
+}
 
 
 /////////////////////////////////////////
 //////////////////////////////////////////
 function pollNow() {
-	
 	immediatePollRequested = true;
 	clearTimeout(pollingTimerEvent);
 	polling();
 }
 
+
 //////////////////////////////////////////
 //////////////////////////////////////////
 function polling() {
-	<? if ($debug == '1') { ?>
-	
-	document.getElementById('pollmsg').innerHTML = "";
-	document.getElementById('pollmsg').value = "";
-
+	document.getElementById("pausePolling").checked = (stopPollingFlag == true);
 	if (stopPollingFlag == false) {
-		document.getElementById('pollmsg').innerHTML = "polling";
 		if (!inPollRequest) {
-			xmlhttpPoll("capreceiver", "&last=" + CurrentPosition);
+			//---### xmlhttpPoll("capreceiver", "&last=" + CurrentPosition);
+			xmlhttpPoll("capreceiver", "id=" + meetingDocId + "&room=" + myroomid + "&ver=" + CurrentPosition);   //---###
 		}
-		pollingTimerEvent = setTimeout('polling()',500);
+		pollingTimerEvent = setTimeout('polling()', 500);
 	}
-	<? } ?>
 }
+
 
 //////////////////////////////////////////
 //////////////////////////////////////////
@@ -500,26 +537,136 @@ function startPolling() {
 	polling();
 }
 
+
 //////////////////////////////////////////
 //////////////////////////////////////////
 function stopPolling() {
 	stopPollingFlag = true;
-	<? if ($debug == '1') { ?>
-	document.getElementById('pollmsg').innerHTML = "";
-	document.getElementById('pollmsg').value = "";
-	<? } ?>
+	document.getElementById("pausePolling").checked = true;
 }
+
 
 //////////////////////////////////////////
 //////////////////////////////////////////
-function stopSending() {
-	stopSendingFlag = true;
+function updatePolling() {
+	if (document.getElementById("pausePolling").checked == true) {
+		stopPolling();
+	} else {
+		startPolling();
+	}
 }
+
+
+//////////////////////////////////////////
+//////////////////////////////////////////
+function loadAllCommands() {
+	clearPoll();
+	CurrentPosition = 0;
+	startPolling();
+}
+
+
 //////////////////////////////////////////
 //////////////////////////////////////////
 function startSending() {
 	stopSendingFlag = false;
 	dumpBuffer();
+}
+
+
+//////////////////////////////////////////
+//////////////////////////////////////////
+function stopSending() {
+	stopSendingFlag = true;
+	document.getElementById("pauseSending").checked = true;   //---###
+}
+
+
+//////////////////////////////////////////
+//////////////////////////////////////////
+function updateSending() {
+	if (document.getElementById("pauseSending").checked == true || myroomid == "" || mypassword == "") {
+		stopSending();
+	} else {
+		startSending();
+	}
+}
+
+
+//////////////////////////////////////////
+//////////////////////////////////////////
+function enableAdvancedTestMode() {
+	document.getElementById("enableAdvancedTesting").checked = true;
+	document.getElementById("resetTesting").style.display = "inline-block";
+	document.getElementById("col2").style.display = "inline-block";
+	document.getElementById("col3").style.display = "inline-block";
+	stopPolling();
+	clearCodes();
+	clearPoll();
+}
+
+
+//////////////////////////////////////////
+//////////////////////////////////////////
+function disableAdvancedTestMode() {
+	document.getElementById("enableAdvancedTesting").checked = false;
+	document.getElementById("resetTesting").style.display = "none";
+	document.getElementById("col2").style.display = "none";
+	document.getElementById("col3").style.display = "none";
+	stopPolling();
+	clearCodes();
+	clearPoll();
+}
+
+
+//////////////////////////////////////////
+//////////////////////////////////////////
+function enableTesting() {
+	document.getElementById("testModeDiv").style.display = "block";
+	document.getElementById("col1").style.display = "inline-block";
+	if (document.getElementById("enableAdvancedTesting").checked == true) {
+		document.getElementById("resetTesting").style.display = "inline-block";
+		document.getElementById("col2").style.display = "inline-block";
+		document.getElementById("col3").style.display = "inline-block";
+	}
+	enableTestingAllowed = false;
+}
+
+
+//////////////////////////////////////////
+//////////////////////////////////////////
+function disableTesting() {
+	document.getElementById("testModeDiv").style.display = "none";
+	document.getElementById("col1").style.display = "none";
+	document.getElementById("col2").style.display = "none";
+	document.getElementById("col3").style.display = "none";
+	enableTestingAllowed = false;
+}
+
+
+//////////////////////////////////////////
+//////////////////////////////////////////
+function updateAdvancedTestMode() {
+	if (document.getElementById("enableAdvancedTesting").checked == true) {
+		enableAdvancedTestMode(); 
+	} else {
+		disableAdvancedTestMode(); 
+	}
+}
+
+
+//////////////////////////////////////////
+//////////////////////////////////////////
+function resetTesting() {
+	stopPolling();
+	
+	clearPoll();
+	clearCodes();
+	clearCaptions();
+	
+	startSending();
+	
+	////// CurrentPosition = -1;
 }
 
 
@@ -531,115 +678,150 @@ function adminCommand(cmd) {
 	mypassword = document.getElementById('password').value;
 	var str = "admincmd=" + cmd + "&adminpwd=" + mypassword + "&room=" + myroomid;
 	if (!inPostRequest) {
-		xmlhttpPost("capreceiver",str);
+		xmlhttpPost("capreceiver", str);
 	}
 }
 
 
+//////////////////////////////////////////
 //////////////////////////////////////////
 function stopClear() {
 	stopPolling();
 	stopSending();
-
+	
 	clearPoll();
 	clearCodes();
 	clearCaptions();
+	
+	CurrentPosition = -1;
+	
+	disableTesting();
 }
 
+
+//////////////////////////////////////////
 //////////////////////////////////////////
 function createRoom() {
+	if (checkMissingParams() == true) return;
+	
 	if (!inPostRequest) {
 		adminCommand("create");
 		startSending();
+		enableTestingAllowed = true;
 	} else {
-		document.getElementById('message').innerHTML= "Status: " + "Busy...try again";
+		document.getElementById('message').innerHTML = busyMsg;
 	}
 }
+
+
 //////////////////////////////////////////
 //////////////////////////////////////////
 function openRoom() {
+	if (checkMissingParams() == true) return;
+	
 	if (!inPostRequest) {
 		adminCommand("open");
 		startSending();
+		enableTestingAllowed = true;
 	} else {
-		document.getElementById('message').innerHTML= "Status: " +  "Busy...try again";
+		document.getElementById('message').innerHTML = busyMsg;
 	}
 }
+
+
 //////////////////////////////////////////
 //////////////////////////////////////////
 function closeRoom() {
+	if (checkMissingParams() == true) return;
+	
 	if (!inPostRequest) {
 		adminCommand("close");
 	} else {
-		document.getElementById('message').innerHTML= "Status: " +  "Busy...try again";
+		document.getElementById('message').innerHTML = busyMsg;
 	}
 }
+
+
 //////////////////////////////////////////
 //////////////////////////////////////////
 function clearRoom() {
+	if (checkMissingParams() == true) return;
+	
 	if (!inPostRequest) {
 		adminCommand("reset");
 		startSending();
+		enableTestingAllowed = true;
 	} else {
-		document.getElementById('message').innerHTML= "Status: " + "Busy...try again";
+		document.getElementById('message').innerHTML = busyMsg;
 	}
 }
+
+
+//---###//---###//---###//---###
+function checkMissingParams() {
+	var roomidBlank = ((document.getElementById('room').value).replace(/\s/g, "") == "");
+	var passwordBlank = ((document.getElementById('password').value).replace(/\s/g, "") == "");
+	document.getElementById("roomidHelp").style.display = (roomidBlank == true) ? "inline" : "none";
+	document.getElementById("passwordHelp").style.display = (passwordBlank == true) ? "inline" : "none";
+	return (roomidBlank == true || passwordBlank == true);
+}
+
 
 //////////////////////////////////////////
 //////////////////////////////////////////
 function clearCaptions() {
-	var el = document.getElementById('captions');
-	el.innerHTML = "";
-	el.value = "";
-	
- 	oldText ="";
+	document.getElementById('captions').value = "";
+ 	oldText = "";
 	oldTextLen = 0;
 	curText = "";
 	curTextLen = 0;
 }
 
+
 //////////////////////////////////////////
 //////////////////////////////////////////
 function clearCodes() {
-
-<? if ($debug == '1') { ?>
-
-	var el = document.getElementById('codes');
-	el.innerHTML = "";
-	el.value = "";
-<? } ?>
+	document.getElementById('codes').value = "";
 }
-//////////////////////////////////////////
-//////////////////////////////////////////
-function displayCodes(str) {
 
-<? if ($debug == '1') { ?>
-	var el = document.getElementById('codes');
-	el.innerHTML += str  + "<br />";
-	//el.value = "";
-	el.scrollTop = el.scrollHeight;
-<? } ?>
-}
 
 //////////////////////////////////////////
 //////////////////////////////////////////
 function clearPoll() {
-
-<? if ($debug == '1') { ?>
-	var el = document.getElementById('capcorcommands');
-	el.innerHTML = "";
-	el.value = "";
-<? } ?>
+	document.getElementById('capcorcommands').value = "";   //---###
 }
 
+
+/* //--###//--###//--###//--###//--###//--###//--###//--###//--###
 //////////////////////////////////////////
 //////////////////////////////////////////
 function reinit() {
 	if (!inPostRequest) {
-		adminCommand("close");
-		init();
+		 adminCommand("close");
+		 init();
 	} else {
-		document.getElementById('message').innerHTML= "Status: " + "Busy...try again";
+		document.getElementById('message').innerHTML = busyMsg;
+	}
+}
+*/ //--###//--###//--###//--###//--###//--###//--###//--###//--###
+
+
+/*****************************************************/
+/*****************************************************/
+function init() {
+	stopClear();
+	
+	document.getElementById('room').value = myroomid;
+	document.getElementById('password').value = mypassword;
+	sendTimerEventVar = setTimeout("dumpBuffer()", SENDTIMEOUT);
+	document.getElementById('message').innerHTML = "Status: Not connected.";
+	
+	disableAdvancedTestMode();
+	
+	if (!("resize" in document.getElementById("captions").style)) {
+		document.getElementById("captions").style.height = "300px";
+		document.getElementById("codes").style.height = "300px";
+		document.getElementById("capcorcommands").style.height = "300px";
 	}
 }
 
@@ -648,65 +830,52 @@ function reinit() {
 </head>
 
 <body>
-<div class="container">
-<div class="heading">
-<p><button  onclick="reinit()">Stop/Reset</button>&nbsp; </p>
-
-<p>
-Room: <INPUT TYPE="text" id="room" VALUE="" SIZE="10"><br/>
-Admin Password: <INPUT TYPE="password" id="password" VALUE="" SIZE="5"><br/>
-&nbsp;&nbsp;<button  onclick="createRoom();">Create/Join </button>
-&nbsp;&nbsp;<button  onclick="openRoom();">Open/Join </button>
-&nbsp;&nbsp;<button  onclick="closeRoom();">Close </button>
-&nbsp;&nbsp;<button  onclick="clearRoom();">Clear Room</button>
-</p>
-</div>
-
-<div class="notification"> <p id="message"> </p>
-</div>
-
-<div class="col1">
-<p>Enter Captions
-<? if ($debug == '1') { ?>
-<button  onclick="stopSending()">Stop Sending</button>&nbsp;&nbsp;
-<button  onclick="startSending()">Start Sending</button>&nbsp;&nbsp;
-<? } ?>
-</p>
-<!-- 
-<textarea cols=35 name="captions" id="captions" onfocus="moveCursor(this)" onclick="moveCursor(this)" rows=30>
-<textarea cols=35 name="captions" id="captions"  rows=30>
-
--->
-<textarea cols=35 name="captions" id="captions" onfocus="moveCursor(this)" onclick="moveCursor(this)" rows=30>
-</textarea>
-</div>
-
-<? if ($debug == '1') { ?>
-<div class="col2outer">
-
-<div class="col1inner"><p>&nbsp;&nbsp;</p>&nbsp;<button  onclick="clearCodes();">Clear</button>
-<p>Caption Codes Sent</p>
-<div id="codes" style="width:90%;height:400px;overflow-y:scroll;" ></div>
-</div>
-
-<div class="col2inner"><p>&nbsp;<button  onclick="startPolling()">Start Polling</button> &nbsp;&nbsp;
-<button  onclick="stopPolling()">Stop Polling</button>&nbsp;&nbsp;<span id="pollmsg"></span></p>
-&nbsp;<button  onclick="clearPoll()">Clear</button>
-<p>Server Commands Received</p>
-<div id="capcorcommands" style="width:90%;height:400px;overflow-y:scroll;" ></div>
-</div>
-
-</div>  
-
-<? } ?>
-
-</div>
-
-
-
-
-<script type="text/javascript" defer>
-init();
-</script>
+	<div id="title">Manage & Test CCC Meeting Rooms</div>
+	
+	<div>Meeting Room: <input type="text" id="room" value="" size="20"><span id="roomidHelp">*** Missing Room ID</span></div>
+	<div>Admin Password: <input type="password" id="password" value="" size="15"><span id="passwordHelp">*** Missing Password</span></div>
+	
+	<div id="roomBtns">
+		<button onclick="createRoom();">Create/Join </button>
+		<button onclick="openRoom();">Open/Join </button>
+		<button onclick="closeRoom();">Close </button>
+		<button onclick="clearRoom();">Clear Room</button>
+	</div>
+	<div id="message"></div>
+	
+	<div id="testModeDiv">
+		<label class="testCheckbox"><input type="checkbox" id="enableAdvancedTesting" value="false" onchange="updateAdvancedTestMode();"><span>Show Additional Test Fields</span></label>
+		<button id="resetTesting" onclick="resetTesting();" style="display:none;">Reset All Test Fields</button>
+	</div>
+	
+	<div id="col1" class="colx">
+		<div>Enter Test Captions to Send:</div>
+		<div>
+			<label class="testCheckbox"><input type="checkbox" id="pauseSending" value="true" onchange="updateSending();"><span>Sending Paused</span></label>
+			<button class="resetBtn" onclick="clearCaptions();">Clear</button>
+		</div>
+		<textarea id="captions" onfocus="moveCursor(this)" onclick="moveCursor(this)"></textarea>
+	</div>
+	
+	<div id="col2" class="colx" style="display:none;">
+		<div>Caption Codes Sent:</div>
+		<div><button class="resetBtn" onclick="clearCodes();">Clear</button></div>
+		<textarea id="codes" readonly></textarea>
+	</div>
+	
+	<div id="col3" class="colx" style="display:none;">
+		<div>Polled Commands:<button id="loadAll" class="resetBtn" onclick="loadAllCommands();">Load All</button></div>
+		<div>
+			<label class="testCheckbox"><input type="checkbox" id="pausePolling" value="true" onchange="updatePolling();"><span>Polling Paused</span></label>
+			<button class="resetBtn" onclick="clearPoll();">Clear</button>
+		</div>
+		<textarea id="capcorcommands" readonly></textarea>
+	</div>
+	
+	<script type="text/javascript" defer>
+		init();
+	</script>
+	
 </body>
+
 </html>

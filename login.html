@@ -1,46 +1,58 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
- <head>
-  <title>Captions V3 Entrance</title>
-  <script>
-function getUrlParameter(sParam)
-{
-    var sPageURL = window.location.search.substring(1);
-    var sURLVariables = sPageURL.split('&');
-    for (var i = 0; i < sURLVariables.length; i++) 
-    {
-        var sParameterName = sURLVariables[i].split('=');
-        if (sParameterName[0] == sParam) 
-        {
-            return sParameterName[1];
-        }
-    }
-    return "";
+
+<head>
+	<title>CCC Login V3</title>
+	
+<style>
+
+div {
+	margin: 0.25em 0em;
 }
 
-function gotoroom()
-{
-	var roomidurl = getUrlParameter("room").replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "");
-	if (roomidurl.length > 0)
-	{
-		document.getElementById("roomidfield").value = roomidurl;
-		document.getElementById("captionsform").submit();
-	}
-}   
-  </script>
- </head>
+#title {
+	display: inline-block;
+    margin-top: 0em;
+    margin-bottom: 0.75em;
+    padding: 0.25em 1em;
+    border: 1px solid #000000;	
+    background-color: #d0ffff;
+    font-size: 1.1em;
+    font-weight: bold;
+    text-align: center;
+}
 
- <body onload="gotoroom()">
-  <form id="captionsform" action="cccV3.php" method="post">
-Room ID: <input type=text id="roomidfield" name=room size=15><P>
+#correctorBackdrop {
+	display: inline-block;
+    margin: 1em 0em 1em 0.75em;
+    padding: 0.25em 0.75em 0.375em 1em;
+    border: 1px solid #999999;
+	box-shadow: 1px 1px 6px #999999;
+}
 
-For Correctors, please provide the following:<br>
-Password: <input type=password name=pwd size=15><br>
-Your two initials: <input type=text name=who size=2 maxlength="2"><br>
-<!-- <input type=checkbox name=mobile value=1> Check to use mobile/AJAX version<br>
--->
-<input type=submit value="View Captions">
-  </form>
+</style>
+	
+</head>
 
- </body>
+<body>
+	<div id="title">CCC Meeting Room Participant Login</div>
+	
+	<form action="cccV3.php" method="post">
+		<div>To view captions, please provide the following:</div>
+		<div>Room ID: <input type=text name=room size=20></div>
+		
+		<div id="correctorBackdrop">
+			<div>Correctors, please also provide the following:</div>
+			<div>Password: <input type=password name=pwd size=15></div>
+			<div>Your two initials: <input type=text name=who size=2 maxlength="2"></div>
+		</div>
+		
+		<!-- <input type=checkbox name=mobile value=1> Check to use mobile/AJAX version<br>
+		-->
+		
+		<div><input type=submit value="View Captions"></div>
+	</form>
+	
+</body>
+
 </html>

@@ -1,0 +1,102 @@
+.caption {
+	text-decoration: none;
+	
+	/* the following settings are initialized & dynamically modified by the script
+	color: (caption text color)
+	background-color: (caption background color)
+	font-family: (font face setting)
+	font-size: (font size setting)
+	font-weight: (bold text setting)
+	*/
+}
+
+
+.caption input:focus {
+	outline-style: solid;
+	outline-width: 0.15em;
+	margin-right: 0.2em;
+	/* the following settings are initialized & dynamically modified by the script
+	outline-color: (corrected text color)
+	*/
+}
+
+
+.corrected {
+	/* the following settings are initialized & dynamically modified by the script
+	color: (corrected text color)
+	text-decoration: (corrected text underline setting)
+	*/
+}
+
+
+.corrected[cccquick] {
+	/* the following settings are initialized & dynamically modified by the script
+	color: (authenticatedCorrector ? corrected text color : caption text color)
+	text-decoration: (authenticatedCorrector ? corrected text underline setting : none)
+	*/
+}
+
+
+.locked {
+	/* the following settings are initialized & dynamically modified by the script
+	background-color: (locked highlight color)
+	*/
+} 
+
+
+p[cccnewspeaker=show]::before {
+	content: ">> " attr(cccspeaker) ": ";
+	margin-right: 0.15em;
+	
+	/* the following settings are initialized & dynamically modified by the script
+	color: (corrected text color)
+	text-decoration: (corrected text underline setting)
+	*/
+}
+
+
+p[cccnextpara]::after {
+	content: attr(cccnextpara);
+	position: relative;
+	top: 0.05em;
+	margin-left: 0.4em;
+	padding: 0.05em 0.2em 0.2em 0.2em;
+	border: 0.11em solid;
+	border-radius: 0.35em;
+	font-family: Arial, sans-serif;
+	font-size: 0.85em;
+	font-weight: bold;
+	white-space: nowrap;
+	
+	/* the following settings are initialized & dynamically modified by the script
+	color: (corrected text color)
+	background-color: (computed)
+	border-color: (computed)
+	*/
+}
+
+
+/* deleteall chars */
+span[cccdelall] {
+	margin-right: .3em;
+	padding-left: 1px;
+    padding-right: 1px;
+	cursor: default;
+	/* the following settings are initialized & dynamically modified by the script
+	display: (authenticatedCorrector ? inline : none)
+	*/
+}
+
+
+.corrected[cccdelall] {
+	/*
+	margin-right: .3em;
+	padding-left: 1px;
+    padding-right: 1px;
+	cursor: default;
+	*/
+	/* the following settings are initialized & dynamically modified by the script
+	color: (caption background color)
+	background-color: (corrected text color)
+	*/
+}

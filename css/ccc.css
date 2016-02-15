@@ -1,11 +1,21 @@
+body {
+	margin: 0px;
+}
 
- #f1capcontent {
-	padding-left: 20px;   /*### added */
-	padding-right: 10px;   /*### added */
-	padding-bottom: 3ex;   /*### added */
-	}
-		
-#capcontent {
+
+body button:focus, body input:focus, body select:focus {
+	outline: #ff0000 groove;
+	outline-width: 2px;
+}
+
+
+/* hide "x" to clear inside <input> elements in IE 10+ */
+::-ms-clear {
+display: none;
+}
+
+
+#CaptionContent {
 	position: fixed;
 	top: 0px;
 	left: 0px;
@@ -13,100 +23,517 @@
 	bottom: 0px;
 }
 
-#top-line {
+
+#Header {
+	height: 30px;
+	font-size: 16px;
+	line-height: 1.5em;
+	background-color: #ffffff;
+    overflow: hidden;
+}
+
+
+#StartFromZero {
+	margin-top: 3px;
+	margin-left: 5px;
+}
+
+
+#HeaderIcons {
+	position: absolute;
+    top: 0px;
+    right: 0px;
+	padding-top: 2px;
+    padding-left: 2px;
+    padding-right: 5px;
+    background-color: inherit;
+}
+
+
+#SettingsIcon, #QuickHelpIcon {
+	display: inline-block;
+    width: 33px;
+	height: 25px;
+	padding-left: 0px;
+	padding-right: 0px;
+	border: 1px solid #002060;
+	border-radius: 0.4em;
+	background-color: #4060A0;      /*### for fall-back compatibility */
+	background: linear-gradient(to bottom, #6080C0, #204080);
+	cursor: pointer;
+}
+
+
+#HeaderIcons img {
+	height: 20px;
+	margin: 0px;
+}
+
+
+#SettingsIcon {
+	float: right;
+}
+
+
+#QuickHelpIcon {
+	display: none;
+    margin-right: 5px;
+}
+
+
+#MeetTitle, #MeetStats {
+	margin-left: 0.5em;
+    margin-right: 0.25em;
+	/*
+	font-family: "Times New Roman", serif;
+	font-size: 16px;
+	*/
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    font-style: italic;	
+}
+
+
+#TopLine {
 	position: fixed;
-	top: 31px;
-	left: 5px;
-	right: 5px;
+	top: 29px;
+	left: 0px;
+	right: 0px;
 	height: 0px;
 	border-top: 1px solid black;
- }
+}
 
-.capwindow {
+
+#CaptionWindow {
 	position: absolute;
-	top: 32px;
+	top: 30px;
 	left: 0px;
 	right: 0px;
 	bottom: 0px;
 	overflow: auto;
 }
 
-#doccontent {
 
+#Form1CaptionContent {
+	padding-left: 4px;
+	padding-right: 4px;
+	padding-bottom: 24px;
 }
-/* Make sure synced with NewSpeaker command and attribute name */
-p[cccnewspeaker=show]::before {
-/*
-	content: attr(cccspeaker);
+
+
+#DocContent {
+	margin-left: 0.5em;
+	margin-right: 0.5em;
+	margin-bottom: -0.25em;
+}
+
+
+#DocContent p {
+	margin: 1em 0em;
+	line-height: 1.3em;
+}
+
+
+#ShowScroll {
+	position: absolute;
+}
+
+
+.closeDialogIcon {
+	float: right;
+	margin: 4px 4px 0px 5px;
+    width: 24px;
+    height: 20px;
+	padding-left: 3px;
+	border: 1px solid #002060;
+	border-radius: 0.4em;
+	background-color: #4060A0;   /*### for fall-back compatibility */
+	background: linear-gradient(to bottom, #6080C0, #204080);
+	cursor: pointer;
+}
+
+
+/*###  Quick Help Popup  ###*/
+#QuickHelp {
+	position: relative;
+	top: 0px;
+	right: 0px;
+	height: 0px;
+	text-align: right;
+}
+
+
+#QuickHelpBackdrop {
+	display: inline-block;
+	margin: 2px;
+	min-width: 216px;
+	padding: 0.5em;
+	font-family: Arial, sans-serif;
+	font-size: 14px;
+	text-align: center;
+	color: #000000;
+	background-color: #D0FFFF;
+	box-shadow: 1px 1px 10px #000000;
+}
+
+
+#CloseQuickHelpIcon {
+	margin: -3px -3px 0px 5px;
+}
+
+
+#QuickHelpTitle {
+	text-align: center;
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+
+#QuickHelpPrompt {
+	margin-right: 18px;
+	text-align: center;
+	font-style: italic;
+	clear: both;
+}
+
+
+#TableSplitter {
+	display: none;
+}
+
+
+#QuickHelpBackdrop  table {
+	display: inline-table;
+	margin-top: 0.5em;
+	border: 1px solid black;
+	border-spacing: 0px;
+}
+
+
+#QuickHelpBackdrop table em {
+    font-style: italic;
+	font-size: 0.90em;
+}
+
+
+#QuickHelpBackdrop table strong {
+    font-weight: bold;
+}
+
+
+#QuickHelpBackdrop td {
+	padding: 0.15em 0.4em 0.25em 0.5em;
+	text-align: right;
+	border-top: solid 1px #b0e0e0;
+}
+
+
+#QuickHelpBackdrop td:nth-child(2) {
+	padding-left: 0em;
+	text-align: center;
+}
+
+
+#QuickHelpBackdrop td:nth-child(3) {
+	padding-left: 0em;
+	padding-right: 0.5em;
+	text-align: left;
+}
+
+
+#QuickHelpBackdrop tr:first-child td {
+	border-top: none
+}
+
+
+#QuickHelpBackdrop tr:nth-child(2n-1) td {
+	background-color: #c8f8f8;
+}
+/*###  END of Quick Help Popup  ###*/
+
+
+/*###  Settings Dialog  ###*/
+#Settings {
+	position: relative;
+	top: 0px;
+	right: 0px;
+	height: 0px;
+	text-align: right;
+}
+
+
+#SettingsBackdrop {
+	position: relative;
+	display: inline-block;
+	min-width: 230px;
+	margin: 2px;
+	font-family: "Times New Roman", serif;
+	font-size: 18px;
+	text-align: left;
+	color: #000000;
+	background-color: #D0FFFF;
+	box-shadow: 1px 1px 10px #000000;
+}
+
+
+#SettingsTitle {
+	margin-top: 0.375em;
+	padding-left: 5px;
+	font-family: Arial, sans-serif;
+	text-align: center;
+    font-weight: bold;
+}
+
+
+#SettingsBody {
+	padding: 0.0em 0.5em 0.25em 0.5em;
+}
+
+
+#SettingsBody > div {
+	margin-top: 0.5em;
+	margin-bottom: 0.25em;
+}
+
+
+.SettingsLine {
+	display: inline-block;
+	cursor: pointer;
+}
+
+
+.SettingsLine input {
+	margin: 3px;
+	padding: 0px;
+}
+
+
+#CustomColorSettings {
+	margin-left: 1.25em;
+	margin-bottom: 1.25em;
+}
+
+
+#CustomColorSettings > div {
+	margin-top: 0.375em;
+	margin-bottom: 0.375em;
+	font-size: 0.95em
+}
+
+
+.ColorButton {
+	width: 33px;
+	height: 22px;
 	background-color: #FFFFFF;
-	color: #FF0000;
-	font-weight: bold;
-*/
-	content: attr(cccspeaker) ">>";
-	text-decoration: none;
-	/*background-color: #FFFFEE;
-	*/
-	color: #FF0000;
-	/*	padding: 2px 6px 2px 6px;
-	border-top: 1px solid #CCCCCC;
-	border-right: 1px solid #333333;
-	border-bottom: 1px solid #333333;
-	border-left: 1px solid #CCCCCC;	
-
-border-radius: 7px;
-	*/
-	margin-right: 10px;
-
+	border: 2px solid;
+	border-color: #DDDDDD #666666 #333333 #BBBBBB;
+	border-radius: 8px;
+	cursor: pointer;
 }
 
-p[cccnextpara]::after {
 
-/*	
-\00B6
-content: "\00B6";
-&#182 
+.ColorField {
+	width: 5.25em;
+	margin-left: 2px;
+	text-transform: uppercase;
+}
+
+
+#SettingsButtons  > input {
+	margin-top: 0.375em;
+}
+
+
+#TestStats {
+	display: none;
+    padding: 3px 8px 3px 8px;
+	font-family: "Times New Roman", serif;
+    font-size: 14px;
+    background-color: #B8E8E8;
+	border-top: 1px solid #808080;
+}
+
+
+#MeetTitle2, #MeetStats2 {
+	display: block;
+    white-space: nowrap;
+}
+
+
+#TestBlock {
+	display: none;
+    padding: 2px 8px 3px 8px;
+    font-size: 12px;
+	background-color: #B8E8E8;
+	border-top: 1px solid #808080;
+}
+
+
+#TestBlock span {
+	position: relative;
+	top: -2px;
+}
+/*###  END of Settings Dialog  ###*/
+
+
+/*###  Color Picker Popup ###*/
+#colorPickerScreen {
+	position: absolute;
+    display: none;
+    top: 35px;
+    left: 5px;
+    right: 5px;
+    bottom: 5px;
+    background-color: #666666;
+    border: solid 1px #000000;
+    opacity: 0.5;
+    z-index: 100;	
+}
+
+
+#colorPicker {
+	position: absolute;
+    display: none;
+    top: 35px;
+    left: 5px;
+    right: 5px;
+    bottom: 5px;
+    text-align: center;
+    z-index: 101;	
+}
+
+
+#colorPickerBackdrop {
+	position: relative;
+	display: inline-block;
+	margin-top: 25px;
+	padding: 3px;
+	font-size: 16px;
+	text-align: center;
 	background-color: #FFFFFF;
-	color: #FF0000;
+	border: 1px solid #444444;
+	box-shadow: 1px 1px 9px #000000;
+}
+
+
+#closeColorPickerIcon {
+	margin: 1px 1px 2px 5px;
+}
+
+
+#colorPickerTitle {
+	margin-top: 2px;
+	font-family: Arial, sans-serif;
+	font-size: 16px;
 	font-weight: bold;
-	
-*/
-	content: attr(cccnextpara);
-	text-decoration: none;
-	background-color: #FFFFEE;
-	color: #FF0000;
-	padding: 2px 6px 2px 6px;
-	border-top: 1px solid #CCCCCC;
-	border-right: 1px solid #333333;
-	border-bottom: 1px solid #333333;
-	border-left: 1px solid #CCCCCC;	
-	margin-left: 10px;
-	border-radius: 7px;
-
-}
-
-.overlay {
-     visibility: hidden;
-     position: absolute;
-     left: 0px;
-     top: 0px;
-     width:100%;
-     height:50%;
-     text-align:center;
-     z-index: 1000;
-     background-image:url(dark.png);
-}
-
-.overlay div {
-	width:300px;
-	margin: 100px auto;
-	background-color: #fff;
-	border:1px solid #000;
-	padding:15px;
-	text-align:center;
-
-}
-.overlay div .ov1text{
-     text-align:left;
+	text-align: center;
 }
 
 
+#colorPickerTable {
+	border-spacing: 0px;
+	clear: both;
+}
+
+
+#colorPickerTable td {
+	padding: 0px;
+}
+
+
+#colorPickerTable table {
+	margin: 2px;
+	border-spacing: 0px;
+}
+
+
+#colorPickerTable table td {
+	border-right: solid 1px #E4E4E4;
+	border-bottom: solid 1px #E4E4E4;
+}
+
+
+#colorPickerTable table button {
+	display: block !important;
+	height: 12px;
+	width: 15px;
+	padding: 0px;
+	background-color: transparent;
+	border: none;
+	cursor: pointer;
+}
+/*###  END Color Picker Popup  ###*/
+
+
+/*###  Dialog Overlay  ###*/
+#OverlayScreen {
+	position: fixed;
+	top: 0px;
+	left: 0px;
+	right: 0px;
+	bottom: 0px;
+	background-color: #808080;
+	opacity: 0.5;
+	z-index: 1000;	
+}
+
+
+#Overlay1 {
+	position: relative;
+	text-align: center;
+	z-index: 1001;
+}
+
+
+#Overlay1Body {
+	display: inline-block;
+	min-width: 160px;
+	max-width: 25em;
+    margin: 8px;
+	padding: 0.75em 1em 0.5em 1em;
+	font-size: 18px;
+	text-align: center;
+	background-color: #D0FFFF;
+	box-shadow: 1px 1px 10px #000000;
+}
+
+
+#Overlay1Text1, #Overlay1Text2 {
+	text-align: center;
+	margin-top: 0px;
+	margin-bottom: 0.75em;	 
+}
+
+
+#Overlay1 button {
+	padding-left: 10px;
+	padding-right: 10px;
+	margin: 0px 2px 4px 2px;
+}
+/*###  END of Dialog Overlay ###*/
+
+
+.divtest {
+	position: absolute;
+	top: -1200px;
+	visibility: hidden;
+	height: auto;
+	width: auto;
+}
+
+
+iframeStyle {
+	width: 1px;
+	height: 1px;
+	position: absolute;
+	top: -1000px;
+}
+
+
+.iframeDiv {
+	width: 1px;
+	height: 1px;
+	position: absolute;
+	top: -1000px;
+	display: none;
+}

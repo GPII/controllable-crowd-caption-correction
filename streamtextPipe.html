@@ -2,7 +2,7 @@
 
 <html>
 <head>
-<title>Read StreamText.Net Captions V3</title>
+<title>Pipe StreamText Captions V3</title>
 
 <!--
 Joseph Schauer, 
@@ -12,7 +12,7 @@ UW-Madison
 -->
 
 <script type="text/javascript" >
-
+	
 	var ADMIN_RESPONSE_STATUS_PARAM = "adminrsp";
 	var ADMIN_RESPONSE_REASON_PARAM = "adminre";
 	var ADMIN_RESPONSE_STATUS_OK = "OK";
@@ -31,7 +31,7 @@ UW-Madison
 	var RESPONSE_REASON_PARAM = "reas";
 	var ACCEPT_INDICATOR = "accept";
 	var DENY_INDICATOR = "deny";
-
+	
 	
 	var ajaxResp = {
 	"resp" : "",
@@ -41,23 +41,35 @@ UW-Madison
 	"end" : 0,
 	"data" : ""
 	};
-
+	
 	
 	var TIMEOUT = 300;
 	var debugIt = false;
-
+	
 	var url = "http://www.streamtext.net/text-data.ashx";
 	var mtgEvent = "IHaveADream";
 	var last = "-1";
 	
 	var meetingRoom = "";
 	var adminPass = "";
-	var cccURL = "http://ccc.raisingthefloor.org/ccc/capreceiver";
+	
+	//---### var cccURL = "http://ccc.raisingthefloor.org/ccc/capreceiver";
+	var cccURL = (document.URL).substring(0, (document.URL).lastIndexOf("/")) + "/capreceiver";
+	
 	var cccCommand = "admincmd=caption&adminpwd="
 	
 	var pollingTimerEvent;
 	var stopStreamFlag = true;
 	var inPollRequest = false;
+	
+	//---###
+	var SENDTIMEOUT = 200;
+	var sendTimerEvent;
+	var sendCaptionsBuffer = "";
+	var postRequestCaptionsBuffer = "";
+	var inPostRequest = false;
+	//---###
+	
 	
 	
 /*******************************************************/
@@ -73,7 +85,7 @@ function debug(text) {
 
 /*******************************************************/
 /*******************************************************/
-function xmlhttpGet(strURL,parameterStr) {
+function xmlhttpGet(strURL, parameterStr) {
 
 	var MAXIMUM_WAITING_TIME = 15000; //milliseconds
 	var request = true;
@@ -83,8 +95,8 @@ function xmlhttpGet(strURL,parameterStr) {
 	var response = "";
 	
 	var tstr;
-
-
+	
+	
 	if (window.XMLHttpRequest) {
 		try {
 			xmlHttpReq = new window.XMLHttpRequest();
@@ -97,18 +109,18 @@ function xmlhttpGet(strURL,parameterStr) {
 		debug('xmlhttpPoll:: Cannot create XLMHTTP instance');
 		return request;
 	}
-
+	
 	if (!xmlHttpReq.value)  {
 		xmlHttpReq.value = parameterStr;
 	} 
-
+	
 	//xmlHttpReq.open('POST', strURL, true);	//don't wait
 	//xmlHttpReq.open('POST', strURL, false);  //wait
 	tstr =  strURL + parameterStr;
 	xmlHttpReq.open("GET", tstr, true);	//don't wait
 	//xmlHttpReq.open("GET", "http://www.streamtext.net/text-data.ashx?event=IHaveADream&last=-1", true);	//don't wait
 	//xmlHttpReq.open('GET', strURL, false);  //wait
-
+	
 	/*var requestTimer = setTimeout(function() {
 		debug('xmlhttpGet:: aborting request; timeout reached');
 		debug('xmlhttpGet:: aborting for value='+xmlHttpReq.value);
@@ -169,18 +181,19 @@ function xmlhttpGet(strURL,parameterStr) {
 
 }
 
-/*******************************************************/
-/*******************************************************/
-function xmlhttpPost(strURL,parameterStr) {
 
+/*******************************************************/
+/*******************************************************/
+function xmlhttpPost(strURL, parameterStr) {
+	
 	var MAXIMUM_WAITING_TIME = 15000; //milliseconds
 	var request = true;
 	var xmlHttpReq = null;
-
+	
 	var responseStr = "";
 	var response = "";
 	
-
+	
 	if (window.XMLHttpRequest) {
 		try {
 			xmlHttpReq = new window.XMLHttpRequest();
@@ -193,14 +206,14 @@ function xmlhttpPost(strURL,parameterStr) {
 		debug('xmlhttpPoll:: Cannot create XLMHTTP instance');
 		return request;
 	}
-
+	
 	if (!xmlHttpReq.value)  {
 		xmlHttpReq.value = parameterStr;
 	} 
-
+	
 	try {
-		//xmlHttpReq.open('POST', strURL, true);	//don't wait
-		xmlHttpReq.open('POST', strURL, false);  //wait
+		xmlHttpReq.open('POST', strURL, true);	//don't wait   //---###
+		//---### xmlHttpReq.open('POST', strURL, false);  //wait
 		//xmlHttpReq.open("GET", strURL, true);	//don't wait
 		//xmlHttpReq.open('POST', strURL, false);  //wait
 	} catch (e)  {
@@ -245,7 +258,7 @@ function xmlhttpPost(strURL,parameterStr) {
 						if (responseStr.charAt(0) == "{") {
 							ajaxResp = JSON.parse(responseStr);
 						} else {
-							var len = parseInt(responseStr,10);
+							var len = parseInt(responseStr, 10);
 							var len2 = responseStr.indexOf("{");
 							len = len2 + len;
 							var tmp = responseStr.slice(len2,len);
@@ -256,13 +269,34 @@ function xmlhttpPost(strURL,parameterStr) {
 							tmp = ajaxResp[ADMIN_RESPONSE_STATUS_PARAM];
 							//got some administrative response.  
 							if (tmp != "") {
-								document.getElementById('message').innerHTML = "Status: " + tmp;
+								postStatus("Status: " + tmp, true);
 							}
 						}
 					} else {
-						debug('Error of some type - NOT status=200:  xmlhttpPost::xmlHttpReq.status=:'+this.status);
-						debug('xmlhttpPost::xmlHttpReq.statusText=:'+this.statusText);
-						debug('xmlhttpPost::xmlHttpReq.responseText=:'+this.responseText);
+						//debug('Error of some type - NOT status=200:  xmlhttpPost::xmlHttpReq.status=:'+this.status);
+						//debug('xmlhttpPost::xmlHttpReq.statusText=:'+this.statusText);
+						//debug('xmlhttpPost::xmlHttpReq.responseText=:'+this.responseText);
+						
+						
+						//---###//---###//---###//---###//---###//---###//---###//---###//---###//---###
+						if (this.responseText != "") {
+							var postResponse = JSON.parse(this.responseText);
+							if ("adminrsp" in postResponse && "adminre" in postResponse) {
+								if (postResponse.adminrsp != "OK") {
+									stopStream("Status: halted - not connected to room <br>" + postResponse.adminrsp + " - " + postResponse.adminre);
+								} else {
+									////// postStatus("Status: " + postResponse.adminrsp + " - " + postResponse.adminre, false);
+									updatePostedCaptions();
+								}
+							} else {
+								stopStream("Status: halted <br>" + this.responseText);
+							}
+						} else {
+							updatePostedCaptions();
+						}
+						//---###//---###//---###//---###//---###//---###//---###//---###//---###//---###
+						
+						
 					}
 					inPostRequest = false;
 				} else {
@@ -288,42 +322,103 @@ function getStream(n) {
 		if (!inPollRequest) {
 			xmlhttpGet(url, "?event=" + mtgEvent + "&last=" + last);
 		}
-		pollingTimerEvent = setTimeout('getStream(2)',TIMEOUT);
+		pollingTimerEvent = setTimeout('getStream(2)', TIMEOUT);
 	} else {
 		document.getElementById('stlast').value = last;
 	}
 }
 
+
 //////////////////////////////////////////
 //////////////////////////////////////////
 function pushNow(response) {
+//---### function pushToBufferNow(response) {
 	var len;
 	var cnt;
 	var tmpTxt = "";
 	var cccParam = "";
-
+	
 	if ((response != null) && (response.i != null) && ((len = response.i.length) != null)) {
 		if (len != 0) {
 			for (cnt = 0; cnt < len; cnt++) {
 				tmpTxt += response.i[cnt].d;
 			}
-			//do something with text
-			document.getElementById('captions').value += decodeURIComponent(tmpTxt);
 			
-			cccParam = cccCommand + adminPass + "&" + ROOM_PARAM + "=" + meetingRoom + "&caption=" + tmpTxt;
-			xmlhttpPost(cccURL,cccParam);
+			//do something with text
+			/*
+			var el = document.getElementById('captions');
+			el.value += decodeURIComponent(tmpTxt);
+			if (document.getElementById("pauseScrolling").checked == false) {
+				el.scrollTop = el.scrollHeight;
+			}
+			*/
+			
+			////// cccParam = cccCommand + adminPass + "&" + ROOM_PARAM + "=" + meetingRoom + "&caption=" + tmpTxt;
+			////// xmlhttpPost(cccURL, cccParam);
+			//---###//---###//---###//---###//---###
+			sendCaptionsBuffer += tmpTxt;
+			sendBufferNow();
+			//---###//---###//---###//---###//---###
+			
 			
 			//show status
-			document.getElementById('p1').innerHTML = "Packet number =[" + last + "]";
+			document.getElementById('p1').innerHTML = "Packet number = [" + last + "]";
 		} 
 	}
 }
 
-//////////////////////////////////////////
-//////////////////////////////////////////
-function stopStream() {
-	stopStreamFlag = true;
+
+//---###//---###//---###//---###//---###
+function sendBufferNow() {
+	document.getElementById("captionsInPipe").value = decodeURIComponent(postRequestCaptionsBuffer + sendCaptionsBuffer);
+	if (sendCaptionsBuffer != "" || postRequestCaptionsBuffer != "") {
+		if (!inPostRequest) {
+			postRequestCaptionsBuffer += sendCaptionsBuffer;
+			sendCaptionsBuffer = "";
+			xmlhttpPost(cccURL, "admincmd=caption&adminpwd=" + adminPass + "&" + ROOM_PARAM + "=" + meetingRoom + "&caption=" + postRequestCaptionsBuffer);
+		} else {
+			sendTimerEvent = setTimeout("sendBufferNow()", SENDTIMEOUT);
+		}
+	}
 }
+
+
+function clearPipeCaptions() {
+	if (stopStreamFlag == true) {
+		postRequestCaptionsBuffer = "";
+		sendCaptionsBuffer = "";
+		updatePostedCaptions();
+		////// document.getElementById("pipeWindow").style.display = "none";
+	}
+}
+
+
+function updatePostedCaptions() {
+	var el = document.getElementById('captions');
+	el.value += decodeURIComponent(postRequestCaptionsBuffer);
+	postRequestCaptionsBuffer = "";
+	document.getElementById("captionsInPipe").value = decodeURIComponent(postRequestCaptionsBuffer + sendCaptionsBuffer);
+	if (document.getElementById("pauseScrolling").checked == false) {
+		el.scrollTop = el.scrollHeight;
+	}
+}
+//---###//---###//---###//---###//---###
+
+
+//////////////////////////////////////////
+//////////////////////////////////////////
+function stopStream(statusMsg) {
+	stopStreamFlag = true;
+	if (statusMsg === undefined) {
+		postStatus("Status: stopped");
+	} else {
+		postStatus(statusMsg, true);
+	}
+	if (document.getElementById("captionsInPipe").value != "") {
+		document.getElementById("pipeWindow").style.display = "inline-block";
+	}
+}
+
 
 //////////////////////////////////////////
 //////////////////////////////////////////
@@ -332,28 +427,42 @@ function startStream() {
 	url = document.getElementById('sturl').value;
 	mtgEvent = document.getElementById('stevent').value;
 	last = document.getElementById('stlast').value;
-	document.getElementById('p0').innerHTML = "Start Url: " + url + "?event=" + mtgEvent + "&last=" + last;
+	document.getElementById('p0').innerHTML = "Start URL: " + url + "?event=" + mtgEvent + "&last=" + last;
 	
 	meetingRoom = document.getElementById('cccroom').value;
 	adminPass = document.getElementById('cccpwd').value;
 	cccURL = document.getElementById('cccurl').value;
 
 	stopStreamFlag = false;
+	postStatus("Status: running");   //---###//---###
+	document.getElementById("pipeWindow").style.display = "none";
 	getStream(1);
+}
+
+
+//---###//---###//---###//---###//---###//---###//---###
+function postStatus(msgText, errorFlag) {
+	document.getElementById('message').style.color = (errorFlag == true) ? "#c00000" : "#0000c0";
+	document.getElementById('message').style.fontWeight = (errorFlag == true) ? "bold" : "normal";
+	document.getElementById('message').innerHTML = msgText;
 }
 
 
 //////////////////////////////////////////
 //////////////////////////////////////////
 function clearCaptions() {
-	document.getElementById('captions').innerHTML = "";
-	document.getElementById('captions').value = '';
+	document.getElementById('captions').value = "";
 }
+
 
 //////////////////////////////////////////
 //////////////////////////////////////////
 function init() {
-
+	// Test for IE9, and older versions of IE
+	if (!window.atob) {
+		document.getElementById("olderBrowserMsg").style.display = "inline-block";
+	}
+	
 	document.getElementById('sturl').value = url;
 	document.getElementById('stevent').value = mtgEvent;
 	document.getElementById('stlast').value = last;
@@ -361,43 +470,163 @@ function init() {
 	document.getElementById('cccroom').value = meetingRoom;
 	document.getElementById('cccpwd').value = adminPass;
 	document.getElementById('cccurl').value = cccURL;
-
-
+	
+	if (!("resize" in document.getElementById("captions").style)) {
+		document.getElementById("captions").style.height = "300px";
+		document.getElementById("captions").style.display = "inline-block";
+	}
 }
 
-
 </script>
+
+<style>
+
+div {
+	margin: 0.25em 0em;
+}
+
+#title {
+	display: inline-block;
+    margin-top: 0em;
+    margin-bottom: 1em;
+    padding: 0.25em 1em;
+    border: 1px solid #000000;	
+    background-color: #d0ffff;
+    font-size: 1.1em;
+    font-weight: bold;
+    text-align: center;
+}
+
+#olderBrowserMsg {
+	display: none;
+	margin-left: 1em;
+    margin-bottom: 1.25em;
+    padding: 0.25em 1em;
+	font-size: 1.1em;
+	font-weight: bold;
+	text-align: center;
+	color: #c00000;
+    border: 3px solid #000000;	
+    background-color: #ffffcc;
+	z-index: 3;
+}
+
+#helpMsg {
+    margin-left: 1em;
+	font-family: Arial;
+    font-size: 13px;
+    font-style: italic;
+	color: #000099;
+}
+
+#startStopBtns {
+	margin-top: 1.5em;
+}
+
+#startStopBtns > button {
+	margin-right: 0.75em;
+	margin-bottom: 0.25em;
+}
+
+#message {
+	min-height: 2.5em;
+	margin-left: 1.5em;
+	text-indent: -1.5em;
+	color: #0000c0;
+}
+
+#captionsWindow, #pipeWindow {
+	display: inline-block;
+	margin-top: 1em;
+	padding: 0.0em 0.5em 0.5em 0.5em;
+	border: 1px solid #aaaaaa;
+    box-shadow: 1px 1px 6px #999999;
+}
+
+.testCheckbox {
+    float: right;
+	font-size: 16px;
+}
+
+.testCheckbox > span  {
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+}
+
+#clearButton, #clearPipeButton {
+	margin-left: 1.75em;
+	margin-right: 0em;
+	margin-bottom: 0em;
+    float: right;
+}
+
+#captions, #captionsInPipe {
+	height: 160px;
+	width: 320px;
+	min-height: 160px;
+	min-width: 320px;
+	margin: 0em;
+	padding: 5px;
+	vertical-align: bottom;
+    font-family: arial;
+    font-size: 13px;
+    border: solid 1px #404040;
+    resize: both;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+#captionsInPipe {
+	height: 60px;
+	min-height: 60px;
+}
+
+</style>
+
 
 </head>
 
 <body>
-StreamText URL: <INPUT TYPE="text" id="sturl" VALUE="" SIZE="60"><br/>
-Event: <INPUT TYPE="text" id="stevent" VALUE="" SIZE="60"><br/>
-Start number: <INPUT TYPE="text" id="stlast" VALUE="" SIZE="15"><br/>
-<br/>
-CCC meeting room: <INPUT TYPE="text" id="cccroom" VALUE="" SIZE="10"><br/>
-CCC Admin Password: <INPUT TYPE="password" id="cccpwd" VALUE="" SIZE="5"><br/>
-CCC URL: <INPUT TYPE="text" id="cccurl" VALUE="" SIZE="60"><br/>
-
-CCC
-<p><button  onclick="startStream()">Start StreamText</button>&nbsp;&nbsp;<button  onclick="stopStream()">Stop StreamText</button></p>
-
-<div class="notification"><p id="message">msg</p></div>
-
-<div id='d1'>
-	<p id='p0'>Start Url: </p>
-	<p id='p1'>Packet number =[]</p>
+	<div id="title">Pipe Captions from Live StreamText Event <br>into open CCC Meeting Room</div>
+	<div></div>
+	<div id="olderBrowserMsg">Browser Support Notice: <br>This utility does not work with IE 9 <br>or older versions of Internet Explorer.</div>
 	
-	&nbsp;<button  onclick="clearCaptions()">Clear</button>
-	<p>Captions</p>
-	<textarea cols=35 name="captions" id="captions" rows=30  ></textarea>
-</div>
-
-
-<script type="text/javascript" defer>
-init();
-</script>
-
+	<div>StreamText URL: <INPUT TYPE="text" id="sturl" VALUE="" SIZE="45"></div>
+	<div>StreamText Event Name: <INPUT TYPE="text" id="stevent" VALUE="" SIZE="30"></div>
+	<div>Start number: <INPUT TYPE="text" id="stlast" VALUE="" SIZE="5"><span id="helpMsg"><b>0</b> to start from beginning; <b>-1</b> to start from <b>now</b></span></div>
+	
+	<div style="margin-top:1.5em;">CCC Meeting Room: <INPUT TYPE="text" id="cccroom" VALUE="" SIZE="20"></div>
+	<div>CCC Admin Password: <INPUT TYPE="password" id="cccpwd" VALUE="" SIZE="15"></div>
+	<div>CCC URL: <INPUT TYPE="text" id="cccurl" VALUE="" SIZE="51"></div>
+	
+	<div id="startStopBtns">
+		<button onclick="startStream()">Start StreamText</button>
+		<button onclick="stopStream()">Stop StreamText</button>
+	</div>
+	<div id='p0'>Start URL: </div>
+	<div id='p1'>Packet number = []</div>
+	<div id="message">Status: not connected</div>
+	
+	<div id="captionsWindow">
+		<div style="min-height: 22px;">Delivered Captions:
+			<button id="clearButton" onclick="clearCaptions()">Clear</button>
+			<label class="testCheckbox"><input type="checkbox" id="pauseScrolling" value="false" onchange="updateScrolling();"><span>Pause Scrolling</span></label>
+		</div>
+		<textarea id="captions" readonly></textarea>
+	</div>
+	
+	<div id="pipeWindow">
+		<div style="min-height: 22px;">Captions Stuck in Pipe:
+			<button id="clearPipeButton" onclick="clearPipeCaptions()">Clear Pipe</button>
+		</div>
+		<textarea id="captionsInPipe" readonly></textarea>
+	</div>
+	
+	
+	<script type="text/javascript" defer>
+		init();
+	</script>
+	
 </body>
 
 

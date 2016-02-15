@@ -1,63 +1,139 @@
 
+div {
+	margin: 0.25em 0em;
+}
+
+
+button {
+	margin-right: 0.25em;
+}
+
+
+#title {
+	display: inline-block;
+    margin-top: 0em;
+    margin-bottom: 1em;
+    padding: 0.25em 1em;
+    border: 1px solid #000000;	
+    background-color: #d0ffff;
+    font-size: 1.1em;
+    font-weight: bold;
+    text-align: center;
+}
+
+
+#roomidHelp, #passwordHelp {
+	display: none;
+	margin-left: 1em;
+	font-family: Arial;
+    font-size: 0.95em;
+    font-weight: bold;
+    font-style: italic;
+	color: #c00000;
+}
+
+
+#roomBtns {
+	margin-top: 1.25em;
+	margin-bottom: 0em;
+}
+
+
+#roomBtns > button {
+	margin-bottom: 0.25em;
+}
+
+
+#testModeDiv {
+	min-height:	2em;
+	margin-top: 1em;
+	margin-bottom: 0.5em;
+}
+
+
+#testModeDiv > label {
+	margin-right: 1em;
+}
+
+
+#enableAdvancedTesting {
+	margin-left: 0em;
+}
+
+
+#resetTesting {
+	margin-left: 2.5em;
+}
+
+
+.colx {
+	float: left;
+	display: inline-block;
+	margin-left: 1em;
+    padding: 0.0em 0.5em 0.5em 0.5em;
+	border: 1px solid #bbbbbb;
+    box-shadow: 1px 1px 6px #bbbbbb;	
+}
+
+
+#col1 {
+	margin-left: 0em;
+}
+
+
+.colx  > div {
+	min-height:	22px;
+}
+
+
+.testCheckbox {
+	margin-left: 0.5em;
+}
+
+
+.testCheckbox > input  {
+	margin-left: 0em;
+}
+
+
+.testCheckbox > span  {
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+}
+
+
+.resetBtn  {
+	margin-left: 1em;
+	margin-right: 0em;
+	float: right;
+}
+
+
+#captions, #codes, #capcorcommands {
+	width: 190px;
+	height: 150px;
+	min-width: 190px;
+	min-height: 150px;
+	margin: 0em;
+	padding: 5px;
+	vertical-align: bottom;
+	font-family: arial;
+	font-size: 13px;
+	border: solid 1px #404040;
+	resize: both;
+	overflow-x: hidden;
+	overflow-y: auto;
+}
+
 
 #codes {
-	border: #c00 solid 1px;
-	margin-left: 1em;
+	min-width: 120px;
+	width: 120px;
 	word-break: break-all;
-	padding: 5px;
-
 }
+
+
 #capcorcommands {
-	border: #c00 solid 1px;
-	margin-left: 1em;
-	padding: 5px;
 	word-break: break-all;
-}
-#captions {
-	margin: 5px;
-	padding: 5px;
-}
-
-.container {
-	width: 100%;
-}
-.heading {
- margin: 0;
- padding: 0;
- width: 100%;
-}
-
- .notification {
-	width: 100%;
-
-}
-.col1 {
-
-    width: 33%;
-	border: #c00 solid 1px;
-	float: left;
-}
-.col2outer {
-
-    width: 66%;
-	border: #c00 solid 1px;
-	margin-right:5px;
-	float: right;
-
-}
-.col1inner {
-
-	width: 45%;
-	margin: 5px;
-	border: #c00 solid 1px;
-	float: left;
-
-}
-.col2inner {
-
-	width: 45%;
-	margin: 5px;
-	border: #c00 solid 1px;
-	float: right;
 }
 

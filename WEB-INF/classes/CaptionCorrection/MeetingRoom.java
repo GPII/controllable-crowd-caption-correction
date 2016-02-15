@@ -593,8 +593,8 @@ public class MeetingRoom {
 	public boolean meetingCorrector(String corPwd) {
 		boolean result = false;
 		if (corPwd != null) {
-				if (corPwd.equals("password1234567890")) {
-				//check in database
+            if (corPwd.equals("password1234567890")) {
+				//FUTURE: check in database
 				result = true;
 			}
 		}

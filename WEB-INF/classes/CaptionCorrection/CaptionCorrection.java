@@ -86,7 +86,7 @@ public class CaptionCorrection {
 	public boolean meetingAdmin(String adminPwd) {
 		boolean result = false;
 		if (adminPwd != null) {
-				if (adminPwd.equals("password1234567890")) {
+            if (adminPwd.equals("password1234567890")) {
 				//FUTURE: check in database
 				result = true;
 			}
@@ -103,7 +103,7 @@ public class CaptionCorrection {
 		MeetingRoom mr = new MeetingRoom(request,roomName);
 		if ((mr == null) || (!mr.roomExists()) ){
 			//unable to open meeting room - may not exist- choose new name or join/open existing meeting
-			writeToAdmin(request, response, ADMIN_NOK, "Meeting room \\\"" + roomName + "\\\" does not exist.  Choose a different room or \\\"" + ADMIN_COMMAND_CREATE_PARAM + "\\\" instead of \\\"" + ADMIN_COMMAND_OPEN_PARAM + "\\\".");
+			writeToAdmin(request, response, ADMIN_NOK, "Meeting room '" + roomName + "' does not exist.  Choose a different room or '" + ADMIN_COMMAND_CREATE_PARAM + "' instead of '" + ADMIN_COMMAND_OPEN_PARAM + "'.");
 		} else {
 			mr.init();
 			if ((captioner = request.getParameter("capcode")) != null) {
@@ -113,7 +113,7 @@ public class CaptionCorrection {
 				mr.setCorrector(getProcessor(corrector));
 			} //else use defaults/previous
 			meetingRooms.put(roomName, mr);
-			writeToAdmin(request, response, ADMIN_OK, "Room \\\"" + roomName + "\\\" has been opened.");
+			writeToAdmin(request, response, ADMIN_OK, "Room '" + roomName + "' has been opened.");
 		}
 	}
 	
@@ -125,8 +125,8 @@ public class CaptionCorrection {
 	//create the room
 		MeetingRoom mr = new MeetingRoom(request, roomName);
 		if ((mr == null) || (mr.roomExists() )){
-			//unable to create meeting room - may already exist- choose new name or join/open existing meeting
-			writeToAdmin(request, response, ADMIN_NOK, "Meeting room \\\"" + roomName + "\\\" already exists.  Choose a different room or \\\"" + ADMIN_COMMAND_OPEN_PARAM + "\\\" instead of \\\"" + ADMIN_COMMAND_CREATE_PARAM + "\\\".");
+			//unable to create meeting room - may already exist - choose new name or join/open existing meeting
+			writeToAdmin(request, response, ADMIN_NOK, "Meeting room '" + roomName + "' already exists.  Choose a different room or '" + ADMIN_COMMAND_OPEN_PARAM + "' instead of '" + ADMIN_COMMAND_CREATE_PARAM + "'.");
 		} else {
 			mr.init();
 			if ((captioner = request.getParameter("capcode")) != null) {
@@ -136,7 +136,7 @@ public class CaptionCorrection {
 				mr.setCorrector(getProcessor(corrector));
 			} //else use defaults
 			meetingRooms.put(roomName, mr);
-			writeToAdmin(request, response, ADMIN_OK, "Room \\\"" + roomName + "\\\" has been created and is now open.");
+			writeToAdmin(request, response, ADMIN_OK, "Room '" + roomName + "' has been created and is now open.");
 		}
 	}
 	
@@ -195,14 +195,14 @@ public class CaptionCorrection {
 				} else if (meetingAdmin(request.getParameter(ADMIN_PASSWD_PARAM))) {
 					//check for admin commands
 					if (adminCommand.equals(ADMIN_COMMAND_CREATE_PARAM)) {
-						writeToAdmin(request, response, ADMIN_OK, "Room " + roomName + " has already been created and is open.");
+						writeToAdmin(request, response, ADMIN_OK, "Room '" + roomName + "' has already been created and is open.");
 					} else if (adminCommand.equals(ADMIN_COMMAND_OPEN_PARAM)) {
-						writeToAdmin(request, response, ADMIN_OK, "Room " + roomName + " is already open.");
+						writeToAdmin(request, response, ADMIN_OK, "Room '" + roomName + "' is already open.");
 					} else if (adminCommand.equals(ADMIN_COMMAND_CLOSE_PARAM)) {
 						//close room
 						roomHndl.closeRoom();
 						meetingRooms.remove(roomName);
-						writeToAdmin(request, response, ADMIN_OK, "Room " + roomName + " has been closed.");
+						writeToAdmin(request, response, ADMIN_OK, "Room '" + roomName + "' has been closed.");
 					} else if (adminCommand.equals(ADMIN_COMMAND_RESET)) {
 						//MeetingRoom mr = meetingRooms.get(roomName);
 						meetingRooms.remove(roomName);
@@ -218,7 +218,7 @@ public class CaptionCorrection {
 						if ((corrector = request.getParameter("corcode")) != null) {
 							roomHndl.setCorrector(getProcessor(corrector));
 						}
-						writeToAdmin(request, response,  ADMIN_OK, "Room " + roomName + " has been modified.");
+						writeToAdmin(request, response,  ADMIN_OK, "Room '" + roomName + "' has been modified.");
 					} else if (adminCommand.equals(ADMIN_COMMAND_MODCAP_PARAM)) {
 						//modify captioner setup
 						if (roomHndl.getCaptioner() != null) {
@@ -227,11 +227,11 @@ public class CaptionCorrection {
 					} else if (adminCommand.equals(ADMIN_COMMAND_CAPTION)) {
 						roomHndl.processCaptions(request, response);
 					} else {
-						writeToAdmin(request, response, ADMIN_NOK, "Administrative Command \\\"" + adminCommand + "\\\" not recognized.");
+						writeToAdmin(request, response, ADMIN_NOK, "Administrative Command '" + adminCommand + "' not recognized.");
 					}
 				} else {
 					//check for non-admin commands
-					writeToAdmin(request, response, ADMIN_NOK, "Administrative password not valid for command \\\"" + adminCommand + "\\\".");
+					writeToAdmin(request, response, ADMIN_NOK, "Administrative password not valid for command '" + adminCommand + "'.");
 				}
 				
 			//meeting room does not exist or not open
@@ -246,19 +246,19 @@ public class CaptionCorrection {
 						//open the room back up
 						openMeetingRoom(request, response, roomName);
 					} else if (adminCommand.equals(ADMIN_COMMAND_MOD_PARAM)) {
-						writeToAdmin(request, response, ADMIN_NOK, "Meeting room \\\"" + roomName + "\\\" is not open or does not exist.");
+						writeToAdmin(request, response, ADMIN_NOK, "Meeting room '" + roomName + "' is not open or does not exist.");
 					} else if (adminCommand.equals(ADMIN_COMMAND_CLOSE_PARAM)) {
-						writeToAdmin(request, response, ADMIN_NOK, "Meeting room \\\"" + roomName + "\\\" is not open or does not exist.");
+						writeToAdmin(request, response, ADMIN_NOK, "Meeting room '" + roomName + "' is not open or does not exist.");
 					} else if (adminCommand.equals(ADMIN_COMMAND_RESET)) {
-						writeToAdmin(request, response, ADMIN_NOK, "Meeting room \\\"" + roomName + "\\\" must be open to reset it.");
+						writeToAdmin(request, response, ADMIN_NOK, "Meeting room '" + roomName + "' must be open to reset it.");
 					} else {
-						writeToAdmin(request, response, ADMIN_NOK, "Administrative Command \\\"" + adminCommand + "\\\" not recognized or room not open.");
+						writeToAdmin(request, response, ADMIN_NOK, "Administrative Command '" + adminCommand + "' not recognized or room not open.");
 					}
 				} else {
-					writeToAdmin(request, response, ADMIN_NOK, "Administrative password not valid for command \\\"" + adminCommand + "\\\".");
+					writeToAdmin(request, response, ADMIN_NOK, "Administrative password not valid for command '" + adminCommand + "'.");
 				}
 			} else {
-				writeToAdmin(request, response, ADMIN_NOK, "Meeting room \\\"" + roomName + "\\\" is not open or does not exist.");
+				writeToAdmin(request, response, ADMIN_NOK, "Meeting room '" + roomName + "' is not open or does not exist.");
 			}
 		} else {
 			writeToAdmin(request, response, ADMIN_NOK, "Please specify a meeting room.");
