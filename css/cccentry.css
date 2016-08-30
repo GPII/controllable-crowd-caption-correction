@@ -61,8 +61,27 @@ button {
 }
 
 
+#eolModeDiv {
+	margin-left: 1.5em;
+}
+
+
+#eolModeDiv > input  {
+	margin-top: 0.2em;
+}
+
+
+#eolModeDiv > span {
+	margin-left: 0.15em;
+	margin-right: 0.5em;
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+}
+
+
 #resetTesting {
-	margin-left: 2.5em;
+	display: inline-block;
+	margin-left: 3.5em;
 }
 
 

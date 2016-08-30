@@ -43,11 +43,14 @@ UW-Madison
 	};
 	
 	
-	var TIMEOUT = 300;
+	var testMtgEvent = "IHaveADream";   //---###//---### (DPK - added Mar 2016)
+	var testGetTimeout = 3000;   //---###//---### (DPK - added Mar 2016)
+	
+	var GETTIMEOUT = 300;
 	var debugIt = false;
 	
 	var url = "http://www.streamtext.net/text-data.ashx";
-	var mtgEvent = "IHaveADream";
+	var mtgEvent = testMtgEvent;   //---###//---### (DPK - modified Mar 2016)
 	var last = "-1";
 	
 	var meetingRoom = "";
@@ -322,7 +325,7 @@ function getStream(n) {
 		if (!inPollRequest) {
 			xmlhttpGet(url, "?event=" + mtgEvent + "&last=" + last);
 		}
-		pollingTimerEvent = setTimeout('getStream(2)', TIMEOUT);
+		pollingTimerEvent = setTimeout('getStream(2)', (mtgEvent == testMtgEvent) ? testGetTimeout : GETTIMEOUT);      //---###//---### (DPK - modified Mar 2016)
 	} else {
 		document.getElementById('stlast').value = last;
 	}

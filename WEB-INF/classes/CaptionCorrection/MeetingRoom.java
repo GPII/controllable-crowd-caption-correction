@@ -27,10 +27,10 @@ public class MeetingRoom {
 	
 
 	/********** CONSTANTS  *******************/
-	private static final int CAPCOR_BUFFER_SIZE = 2000000; //2M
-	private static final int DOCVER_ARRAY_SIZE = 250000; //250K
-	private static final int NUM_CAPTIONS_RECALLABLE = 5000;
-	private static final long FLUSHTIMEOUT = 1000;
+	private static final int CAPCOR_BUFFER_SIZE = 2000000;   // maximum number of characters in the captioner/corrector commands buffer
+	private static final int DOCVER_ARRAY_SIZE = 250000;   // maximum number of captioner words
+	private static final int NUM_CAPTIONS_RECALLABLE = 5000;   // maximum number of recallable captioner words
+	private static final long FLUSHTIMEOUT = 1000;   // milliseconds
 	private static final int MAX_DOC_VER = Integer.MAX_VALUE;
 
 	
@@ -99,24 +99,22 @@ public class MeetingRoom {
 	
 	/********** DATA  *******************/
 	private byte[] capcorBuf;
-	private int capcorBufPos = 0;  //first empty position in array/number of bytes of data in array
+	private int capcorBufPos = 0;  // first empty position in array/number of bytes of data in array
 	private int capcorBufCapacity = CAPCOR_BUFFER_SIZE;  //number of bytes allocated for capcorBuf array
 
 	private int[] docVersionArray;
-	//private int docverArrayPos = 0;  //first empty position in array/number of bytes of data in array
-	private int docVerArrayCapacity = DOCVER_ARRAY_SIZE;  //number of bytes allocated for capcorBuf array
+	//private int docverArrayPos = 0;  // first empty position in array/number of bytes of data in array
+	private int docVerArrayCapacity = DOCVER_ARRAY_SIZE;  // number of ints allocated for docVersionArray array
 	
 	private int startSpanID = 0;
 	private int startParaID = 0;
 	
 	private Long flushTimerStart;
 	
-//	public ArrayList<String> lockList;  //start, end, initials
 	
 	/********** CLIENTS  *******************/
 	private ArrayList<Handlers> clientList;
 
-	
 	
 	/*c************  CONSTRUCTOR  **************************/
 	public MeetingRoom (HttpServletRequest request, String roomStr) {
@@ -135,7 +133,6 @@ public class MeetingRoom {
 	public void init() {
 		
 		clientList = new ArrayList<Handlers>();
-		//lockList = new ArrayList<String>();
 		capcorBuf = new byte[capcorBufCapacity];
 		docVersionArray = new int[docVerArrayCapacity];
 		
@@ -149,11 +146,8 @@ public class MeetingRoom {
 
 		//setup caption processor
 		captionsProcessor = new CaptionProcessor1(NUM_CAPTIONS_RECALLABLE, meetingRoom);
-		captionsProcessor.setGlobalSpanID(startSpanID, docVerArrayCapacity -1);
+		captionsProcessor.setGlobalSpanID(startSpanID, docVerArrayCapacity - 1);
 		captionsProcessor.setGlobalParagraphID(startParaID);
-
-		//captionsProcessor.setLockList(lockList);
-		
 
 	}
 
@@ -188,7 +182,7 @@ public class MeetingRoom {
 		try {
 			capcorFileRW = new RandomAccessFile(file, "rws");
 			loadCapcorBuffer(0);
-			if (debug) {System.err.println("capcorBufPoos = [" + capcorBufPos + "]");}
+			if (debug) {System.err.println("capcorBufPos = [" + capcorBufPos + "]");}
 			
 			//if new meeting room, initialize data
 			try {
@@ -270,7 +264,9 @@ public class MeetingRoom {
 			index = capcorFileRW.length();
 
 			if ((capcorBufPos + appendLength) >= capcorBufCapacity) {
-				//need to deal with this better later...like start a new file
+			
+				// TODO: NEED TO DEAL WITH OVERFLOW BETTER LATER ... LIKE START A NEW FILE, OR EXPAND THE BUFFER
+				
 				System.err.println("New data sent to appendCapcorDataBytes() will cause us to exceed capcorBufCapacity!  Current capcorBufPos = [" + capcorBufPos + "]");
 				throw new IOException();
 			}
@@ -488,7 +484,7 @@ public class MeetingRoom {
 		//run finalizer
 	}
 
-		/***************************************/
+	/***************************************/
 	public void resetRoom() {
 	
 		//close, copy, create
@@ -535,7 +531,7 @@ public class MeetingRoom {
 		try {
 			OutputStream out = response.getOutputStream();
 			if ((last + chunkSize) < tempCapCorBufPos) {
-				//give only a chunkSize ammout of data
+				//give only a chunkSize amount of data
 				//need to find break
 				String tmpStr = new String(capcorBuf,last+chunkSize, tempCapCorBufPos - (last + chunkSize), "US-ASCII");
 				int syncOffset = tmpStr.indexOf("\n");
@@ -593,7 +589,7 @@ public class MeetingRoom {
 	public boolean meetingCorrector(String corPwd) {
 		boolean result = false;
 		if (corPwd != null) {
-            if (corPwd.equals("password1234567890")) {
+				if (corPwd.equals("password1234567890")) {   //---### ***PasswordLocationTag***
 				//FUTURE: check in database
 				result = true;
 			}
@@ -700,7 +696,11 @@ public class MeetingRoom {
 		}
 		encodedData = encodeURIComponent(request.getParameter(DATA_PARAM));
 		
-		requestString = command + "~" + lowerRange + "~" + upperRange + "~" + encodedData + "~" + corrector + "~" + roomName + "\n";
+		//---###//---### (DPK - modified Mar 2016) 
+		//---### Removed the room name parameter from the corrector command string because
+		//---### it appears to be totally unused anywhere.  This reduces the size of the command file.
+		//---### requestString = command + "~" + lowerRange + "~" + upperRange + "~" + encodedData + "~" + corrector + "~" + roomName + "\n";
+		requestString = command + "~" + lowerRange + "~" + upperRange + "~" + encodedData + "~" + corrector + "\n";
 
 		String acceptFlag = DENY_INDICATOR;
 
@@ -764,6 +764,9 @@ public class MeetingRoom {
 		//just make sure we don't run off end
 		if ((start >= docVerArrayCapacity) || (end >= docVerArrayCapacity) || (start < 0) || 
 			(captionFlag && (docVer_PrevEndSpan >= docVerArrayCapacity))) {
+			
+			// TODO: NEED TO DEAL WITH OVERFLOW BETTER LATER ... LIKE START A NEW FILE, OR EXPAND THIS ARRAY
+
 			//error
 			System.err.println("Error in bound of docVersionArray in processCapCorCommand");
 			return -1;

@@ -29,6 +29,7 @@ var inPostRequest = false;
 var enableTestingAllowed = false;
 var busyMsg = "Status: Busy...try again";
 
+
 //////////////////////////////////////////
 //polling for commands from server
 var CurrentPosition = -1;
@@ -44,6 +45,8 @@ var oldText ="";
 var oldTextLen = 0;
 var curText = "";
 var curTextLen = 0;
+var eolEncodedString;   //---###//---### (DPK - added Mar 2016)
+var eolCharCnt;   //---###//---### (DPK - added Mar 2016)
 
 ///////////////////////////////////////////
 //for speech-to-text
@@ -339,9 +342,22 @@ function xmlhttpPoll(strURL, parameterStr) {
 							//if check against doc ID we sent
 							if (CurrentPosition < pollResponse["ver"]) {
 								if (data != "") {
+	
+	/* //---###//---###//---###//---###//---###//---###
+	var startTime = new Date().getTime();
+	*/ //---###//---###//---###//---###//---###//---###
+	
 									var el = document.getElementById('capcorcommands');
 									el.value += data;
 									el.scrollTop = el.scrollHeight;
+	
+	/* //---###//---###//---###//---###//---###//---###
+	if (window.console) {
+		var endTime = new Date().getTime();
+		window.console.log("time: = " + (endTime - startTime));
+	}
+	*/ //---###//---###//---###//---###//---###//---###
+	
 								}
 								CurrentPosition = pollResponse["ver"];
 							}
@@ -428,8 +444,15 @@ function dumpBuffer() {
 				//putArtificialDelimFlag = false;
 				
 				//get number of backspaces to send
-				for (i = oldTextLen - diffIndex; i > 0; i--) {
+				//---###for (i = oldTextLen - diffIndex; i > 0; i--) {
+				//---###	newText += "\b";
+				//---###}
+				//---###//---### (DPK - modified Mar 2016)
+				for (i = diffIndex; i < oldTextLen; i++) {
 					newText += "\b";
+					if (oldText.charAt(i) == "\n" && eolCharCnt == 2) {
+						newText += "\b";
+					}
 				}
 				
 				//get string to send
@@ -479,7 +502,10 @@ function replacer(match, p1, p2, offset, theStr) {
 		return match;
 	} else {
 		var tmp = p2.charCodeAt(0);
-		if (tmp <= 15) {
+		
+		if (tmp == 10) {  //---###//---### (DPK - test & encode for newline added Mar 2016)
+			return (eolEncodedString);
+		} else if (tmp <= 15) {
 			return ("%0" + tmp.toString(16));
 		} else {
 			return ("%" + tmp.toString(16));
@@ -597,7 +623,7 @@ function updateSending() {
 //////////////////////////////////////////
 function enableAdvancedTestMode() {
 	document.getElementById("enableAdvancedTesting").checked = true;
-	document.getElementById("resetTesting").style.display = "inline-block";
+	document.getElementById("eolModeDiv").style.display = "block";   //---###//---### (DPK - modified Mar 2016)
 	document.getElementById("col2").style.display = "inline-block";
 	document.getElementById("col3").style.display = "inline-block";
 	stopPolling();
@@ -610,7 +636,7 @@ function enableAdvancedTestMode() {
 //////////////////////////////////////////
 function disableAdvancedTestMode() {
 	document.getElementById("enableAdvancedTesting").checked = false;
-	document.getElementById("resetTesting").style.display = "none";
+	document.getElementById("eolModeDiv").style.display = "none";   //---###//---### (DPK - modified Mar 2016)
 	document.getElementById("col2").style.display = "none";
 	document.getElementById("col3").style.display = "none";
 	stopPolling();
@@ -625,7 +651,7 @@ function enableTesting() {
 	document.getElementById("testModeDiv").style.display = "block";
 	document.getElementById("col1").style.display = "inline-block";
 	if (document.getElementById("enableAdvancedTesting").checked == true) {
-		document.getElementById("resetTesting").style.display = "inline-block";
+		document.getElementById("eolModeDiv").style.display = "block";   //---###//---### (DPK - added Mar 2016)
 		document.getElementById("col2").style.display = "inline-block";
 		document.getElementById("col3").style.display = "inline-block";
 	}
@@ -638,6 +664,7 @@ function enableTesting() {
 function disableTesting() {
 	document.getElementById("testModeDiv").style.display = "none";
 	document.getElementById("col1").style.display = "none";
+	document.getElementById("eolModeDiv").style.display = "none";   //---###//---### (DPK - added Mar 2016)
 	document.getElementById("col2").style.display = "none";
 	document.getElementById("col3").style.display = "none";
 	enableTestingAllowed = false;
@@ -654,6 +681,20 @@ function updateAdvancedTestMode() {
 	}
 }
 
+//---###//---### (DPK - added Mar 2016)
+function SetEndOfLine() {
+	if (document.getElementById("RadioButtonCRLF").checked == true) {
+		eolEncodedString = "%0d%0a";
+		eolCharCnt = 2;
+	} else if (document.getElementById("RadioButtonLF").checked == true) {
+		eolEncodedString = "%0a";
+		eolCharCnt = 1;
+	} else if (document.getElementById("RadioButtonCR").checked == true) {
+		eolEncodedString = "%0d";
+		eolCharCnt = 1;
+	}
+}
+
 
 //////////////////////////////////////////
 //////////////////////////////////////////
@@ -663,6 +704,10 @@ function resetTesting() {
 	clearPoll();
 	clearCodes();
 	clearCaptions();
+	
+	//---###//---### (DPK - added Mar 2016)
+	document.getElementById("RadioButtonCRLF").checked = true;
+	SetEndOfLine();
 	
 	startSending();
 	
@@ -818,6 +863,10 @@ function init() {
 	
 	disableAdvancedTestMode();
 	
+	//---###//---### (DPK - added Mar 2016)
+	document.getElementById("RadioButtonCRLF").checked = true;
+	SetEndOfLine();
+	
 	if (!("resize" in document.getElementById("captions").style)) {
 		document.getElementById("captions").style.height = "300px";
 		document.getElementById("codes").style.height = "300px";
@@ -844,8 +893,16 @@ function init() {
 	<div id="message"></div>
 	
 	<div id="testModeDiv">
-		<label class="testCheckbox"><input type="checkbox" id="enableAdvancedTesting" value="false" onchange="updateAdvancedTestMode();"><span>Show Additional Test Fields</span></label>
-		<button id="resetTesting" onclick="resetTesting();" style="display:none;">Reset All Test Fields</button>
+		<label class="testCheckbox"><input type="checkbox" id="enableAdvancedTesting" value="false" onchange="updateAdvancedTestMode();"><span>Show Advanced Test Options</span></label>
+		
+		<!-- //---###//---### (DPK - expanded Mar 2016) -->
+		<div id="eolModeDiv">Send paragraph breaks as:<br>
+			<input type="radio" id="RadioButtonCRLF" name="EOL" value="CRLF" onchange="SetEndOfLine();"><span>CRLF</span>
+			<input type="radio" id="RadioButtonLF" name="EOL" value="LF" onchange="SetEndOfLine();"><span>LF</span>
+			<input type="radio" id="RadioButtonCR" name="EOL" value="CR" onchange="SetEndOfLine();"><span>CR</span>
+			<button id="resetTesting" onclick="resetTesting();">Reset All Test Options</button>
+		</div>
+		
 	</div>
 	
 	<div id="col1" class="colx">

@@ -118,8 +118,8 @@ var COMMA_COMMAND = "CO";
 var PERIOD_COMMAND = "PE";
 var QUESTION_COMMAND = "QU";
 var CAPITALIZE_COMMAND = "CA";
-var LOWERCASE_COMMAND = "LC";   //---###//---###   ???
-var REMOVEPUNCTUATION_COMMAND = "RP";   //---###//---###   ???
+var LOWERCASE_COMMAND = "LC";
+var REMOVEPUNCTUATION_COMMAND = "RP";
 var PARAGRAPH_COMMAND = "PA";
 var NEWSPEAKER_COMMAND = "NE";
 var OVERRIDE_COMMAND = "OV";
@@ -174,7 +174,8 @@ var userInput = {
 
 //=========================================================//
 //polling related variables
-var POLL_TIMEOUT = 500;
+var READER_POLL_TIMEOUT = 500;
+var CORRECTOR_POLL_TIMEOUT = 250;
 var stopFlag = false;   //set to false when requesting polling to stop
 
 var immediatePollRequested = false;   //flag indicating a request was made to poll immediately, rather than wait for timeout
@@ -252,12 +253,12 @@ var SPEAKER_TEXT_FIELD_ATTR = "cccspeaker";   //put on paragraphs with newspeake
 var DELETED_PLACEHOLDER = "\u00a0";
 var PARAGRAPH_PLACEHOLDER = "\u00b6";
 
-var PARAGRAPH_MARK  = "\u00a0\u00b6\u00a0";      //---###//---### was = "\u00b6"
-var PARAGRAPH_PLUS_MARK = "\u00a0\u00b6+>>\u00a0";   //---###//---### was = PARAGRAPH_MARK + "+spkr"
+var PARAGRAPH_MARK  = "\u00a0\u00b6\u00a0";   //---### was = "\u00b6"
+var PARAGRAPH_PLUS_MARK = "\u00a0\u00b6+>>\u00a0";   //---### was = PARAGRAPH_MARK + "+spkr"
 
 var SHOWSPEAKER_TEXT = "show";
 var HIDE_TEXT = "hide";
-var NEW_SPEAKER_TEXT = "Speaker";   //---###//---### was = "Speaker: ";
+var NEW_SPEAKER_TEXT = "Speaker";   //---### was = "Speaker: ";
 var NEWSPEAKER_MARK = ">>";
 //var NEW_PARAGRAPH_TEXT = "newparagraph";
 
@@ -398,7 +399,7 @@ function setMouseDownSpanId(event) {
 	var result;
 	debug('setMouseDownSpanId:: START');
 	
-	// pause scrolling when mouse button pressed to facilitate editing
+	// pause scrolling when mouse button pressed to facilitate editing (and reading)
 	scrollingIsMousePaused = true;
 	
 	if (CorrectorModeOn) {
@@ -429,6 +430,7 @@ function setMouseDownSpanId(event) {
 			userInput.clientY = event.clientY;
 			
 			userInput.docver = globalState.documentVersion;  //use version of doc when mouse down was pressed
+			
 			/*************************
 			//sometimes getting target.id of outer form (Form1CaptionContent) instead of what we really want....check into this.
 			//verify whether we want "" or null
@@ -455,9 +457,8 @@ function setMouseDownSpanId(event) {
 					debug ('setMouseDownSpanId:: error on event.target.id: ' + event.target.id);
 				}
 			}
-			
-			
 			****************************/
+			
 		} else {
 			debug('setMouseDownSpanId:: Edit box found.  Ignoring mouse-down');
 		}
@@ -780,6 +781,7 @@ function setMouseUpSpanId(event) {
 			}
 			
 			
+			
 			/*
 			
 			} else if (userInput.key == "key_R") {
@@ -910,7 +912,7 @@ function setMouseUpSpanId(event) {
 			userInput.mouseDownSpanId = -1;
 			//Don't wait for keyup to come (it will not come, in some situations) if onblur not setup or other cases
 			userInput.key = "";
-
+			
 		} //getEditNode
 	} //authenticated user
 	debug('setMouseUpSpanId:: END');
@@ -4623,7 +4625,7 @@ function polling() {
 		} else {
 			debug1("::polling:: in poll request");
 		}
-		pollingTimerEvent = setTimeout(polling, POLL_TIMEOUT);
+		pollingTimerEvent = setTimeout(polling, (CorrectorModeOn ? CORRECTOR_POLL_TIMEOUT : READER_POLL_TIMEOUT));
 	}
 	debug1("::polling:: end");
 	

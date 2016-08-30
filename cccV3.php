@@ -24,7 +24,7 @@ function debugInline($text) {
 //			return;
 //		}
 
-	if (($pwd == "password1234567890") && (strlen($initials) != 2)) {
+	if (($pwd == "password1234567890") && (strlen($initials) != 2)) {   //---### ***PasswordLocationTag***
 		echo "You must enter two characters for initials to be a corrector!";
 		return;
 	}
@@ -34,7 +34,7 @@ function debugInline($text) {
 	$AuthPWD = md5($pwd);
 //////////////////////////////////
 	$CorrectorAuthenticated=false;
-	if (($pwd == "password1234567890") && (strlen($initials) == 2)) $CorrectorAuthenticated = true;
+	if (($pwd == "password1234567890") && (strlen($initials) == 2)) $CorrectorAuthenticated = true;   //---### ***PasswordLocationTag***
 	
 
 
@@ -142,13 +142,16 @@ function debugInline($text) {
 	<div id="CaptionWindow" class="caption">
 		
 		<?
-			if(strcmp(md5($pwd),$AuthPWD)==0){ // This is for correctors only
-				echo '<form id="Form1CaptionContent" name="f1" onsubmit="return false;" onmousedown="setMouseDownSpanId(event);" onmouseup="setMouseUpSpanId(event);"><div id="DocContent"><p id="P0"></p></div></form>';
-			}
-			else{ // This is for participants only
-				echo '<form id="Form1CaptionContent" name="f1" onsubmit="return false;"><div id="DocContent"></div></form>';
-			}
+		//---### Obsolete php code replaced with straight html code below. (DPK - modified Mar 2016)
+		//---### Corrector/participant distinctions now handled in client side code via authenticatedCorrector and CorrectorModeOn
+		//	if(strcmp(md5($pwd),$AuthPWD)==0){ // This is for correctors only
+		//		echo '<form id="Form1CaptionContent" name="f1" onsubmit="return false;" onmousedown="setMouseDownSpanId(event);" onmouseup="setMouseUpSpanId(event);"><div id="DocContent"><p id="P0"></p></div></form>';
+		//	}
+		//	else{ // This is for participants only
+		//		echo '<form id="Form1CaptionContent" name="f1" onsubmit="return false;"><div id="DocContent"></div></form>';
+		//	}
 		?>
+		<form id="Form1CaptionContent" name="f1" onsubmit="return false;" onmousedown="setMouseDownSpanId(event);" onmouseup="setMouseUpSpanId(event);"><div id="DocContent"><p id="P0"></p></div></form>
 		
 	</div>
 	

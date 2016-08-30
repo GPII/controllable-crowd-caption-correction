@@ -86,7 +86,7 @@ public class CaptionCorrection {
 	public boolean meetingAdmin(String adminPwd) {
 		boolean result = false;
 		if (adminPwd != null) {
-            if (adminPwd.equals("password1234567890")) {
+				if (adminPwd.equals("password1234567890")) {   //---### ***PasswordLocationTag***
 				//FUTURE: check in database
 				result = true;
 			}
@@ -285,7 +285,7 @@ public class CaptionCorrection {
 		try {
 			OutputStream out = response.getOutputStream();
 			//out.setBufferSize(); ????
-//{\"r\":\"NOK\",\"msg\":\"
+			//{\"r\":\"NOK\",\"msg\":\"
 			//out.write("<!DOCTYPE html>".getBytes());
 			//out.write("<html>".getBytes());
 			//out.write("<head>".getBytes());
@@ -307,7 +307,7 @@ public class CaptionCorrection {
 	 * @param args the command line arguments
 	 */
 	public static void main(String[] args) {
-		// TODO code application logic here
+		// TODO: code application logic here
 		CaptionCorrection cc = new CaptionCorrection();
 		cc.init();
 	}
